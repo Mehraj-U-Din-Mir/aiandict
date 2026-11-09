@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Department Activities & Events — AI & ICT Department{% endblock %}
+
+{% block body %}
+<div class="container my-1 my-md-2 py-0">
+
+  <!-- Header Banner (Above-the-Fold Glass Strip) -->
+  <div class="glass-panel p-2.5 mb-2 position-relative overflow-hidden text-center text-md-start">
+    <div class="row align-items-center g-2">
+      <div class="col-md-8">
+        <div class="d-inline-flex align-items-center gap-1.5 text-emerald text-uppercase fw-bold text-xs tracking-wider mb-0.5">
+          <i class="bi bi-calendar2-event-fill"></i> Workshops, Bootcamps & Hackathons
+        </div>
+        <h2 class="h4 fw-bold text-white mb-0.5 brand-font">Department Activities</h2>
+        <p class="text-slate-muted small mb-0" style="max-width: 650px; font-size: 0.78rem;">
+          Hands-on workshops, transformer bootcamps, and coding hackathons. Submit participation certificates for faculty credit.
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="#submit-proof-section" class="btn btn-primary-glow btn-sm py-1 px-2.5">
+          <i class="bi bi-file-earmark-check-fill me-1"></i> Submit Proof
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activities Cards Grid -->
+  <div class="row g-3 mb-4">
+    {% for a in activities %}
+      <div class="col-md-6 col-lg-4">
+        <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between glass-panel-hover">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-success bg-opacity-20 text-emerald border border-success border-opacity-30">
+                <i class="bi bi-tag-fill me-1"></i> {{ a.category if a.category else 'Workshop' }}
+              </span>
+              <span class="text-slate-muted small">
+                <i class="bi bi-calendar3 text-cyan me-1"></i> {{ a.date }}
+              </span>
+            </div>
+
+            <h5 class="fw-bold text-white mb-2">{{ a.title }}</h5>
+            
+            <div class="text-slate-muted small mb-2 d-flex align-items-center gap-1.5">
+              <i class="bi bi-geo-alt-fill text-cyan"></i>
+              <span>{{ a.location if a.location else 'AI Lab / Seminar Hall' }}</span>
+            </div>
+
+            <p class="text-slate-muted small mb-3" style="line-height: 1.55;">
+              {{ a.description }}
+            </p>
+          </div>
+
+          <div class="pt-3 border-top border-secondary border-opacity-30 d-flex justify-content-between align-items-center">
+            <span class="badge bg-secondary bg-opacity-40 text-slate-muted" style="font-size: 0.72rem;">Certificate Eligible</span>
+            <a href="#submit-proof-section" class="btn btn-outline-cyan btn-sm" onclick="selectActivity('{{ a.id }}')">
+              Submit Proof &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Participation Submission Form Section -->
+  <div class="glass-panel p-3.5 p-md-4" id="submit-proof-section" style="max-width: 800px; margin: 0 auto;">
+    <div class="text-center mb-3">
+      <div class="stat-icon-wrapper mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.3rem; color: #10b981; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25);">
+        <i class="bi bi-award-fill"></i>
+      </div>
+      <h4 class="fw-bold text-white brand-font mb-1">Submit Participation Proof</h4>
+      <p class="text-slate-muted small mb-0">Provide your certificate link, Google Drive document, or GitHub repo for verification.</p>
+    </div>
+
+    {% if not session.get('user') %}
+      <div class="alert alert-modern alert-modern-warning text-center">
+        <span>Please <a href="{{ url_for('student_login') }}" class="fw-bold text-cyan text-decoration-none">Log in to Student Corner</a> to submit your participation proof.</span>
+      </div>
+    {% else %}
+      <form method="post" action="{{ url_for('submit_participation') }}" class="row g-3">
+        <div class="col-12">
+          <label class="form-label-modern"><i class="bi bi-list-check text-cyan"></i> Select Activity / Event *</label>
+          <select name="activity_id" id="activitySelectInput" class="form-select form-select-modern" required>
+            <option value="" disabled selected>Choose an activity...</option>
+            {% for a in activities %}
+              <option value="{{ a.id }}">{{ a.title }} ({{ a.date }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label-modern"><i class="bi bi-link-45deg text-cyan"></i> Certificate / Proof URL *</label>
+          <input class="form-control form-control-modern" name="proof" type="url" placeholder="https://drive.google.com/..." required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label-modern"><i class="bi bi-chat-text text-cyan"></i> Participation Notes</label>
+          <input class="form-control form-control-modern" name="notes" placeholder="e.g., Team Leader, 2nd Runner Up, Participant ID">
+        </div>
+
+        <div class="col-12 text-end pt-2">
+          <button type="submit" class="btn-primary-glow px-4 py-2.5">
+            <i class="bi bi-send-check-fill me-1"></i> Submit for Verification
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  function selectActivity(activityId) {
+    const sel = document.getElementById("activitySelectInput");
+    if (sel) {
+      sel.value = activityId;
+    }
+  }
+</script>
+{% endblock %}

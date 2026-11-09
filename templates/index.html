@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+{% block title %}AI & ICT Department — Academic & Innovation Portal{% endblock %}
+
+{% block body %}
+<!-- ========================================================================
+     1. HERO SECTION WITH NEURAL PARTICLE NETWORK
+     ======================================================================== -->
+<section class="hero-wrapper position-relative text-center text-white">
+  <!-- Glowing Background Ambient Orbs -->
+  <div class="hero-glow-orb-1"></div>
+  <div class="hero-glow-orb-2"></div>
+
+  <div class="container position-relative z-1 py-3 py-md-4">
+    <!-- Top Pill Badge -->
+    <div class="d-inline-block mb-2">
+      <div class="hero-pill-badge py-1 px-3">
+        <span class="hero-pill-dot"></span>
+        <span class="text-xs">Center of Excellence &bull; Artificial Intelligence &amp; ICT</span>
+      </div>
+    </div>
+
+    <!-- Main Headline with Gradient -->
+    <h1 class="hero-title fw-extrabold mb-2 text-white brand-font" style="font-size: clamp(1.8rem, 3vw, 2.7rem); line-height: 1.25;">
+      Pioneering the Frontiers of <br>
+      <span class="text-gradient-brand">Artificial Intelligence &amp; ICT</span>
+    </h1>
+
+    <!-- Subtitle with Crystal-Clear High Contrast -->
+    <p class="hero-subtitle text-slate-muted mx-auto mb-3.5" style="max-width: 740px; font-size: 0.92rem; line-height: 1.55;">
+      Green Valley Educational Institute — Empowering students with cutting-edge deep learning labs, computer vision architectures, autonomous robotics, and project mentorship.
+    </p>
+
+    <!-- Call to Action Buttons -->
+    <div class="d-flex flex-wrap justify-content-center gap-2.5 mb-4 pb-1">
+      <a href="{{ url_for('projects_showcase') }}" class="btn btn-primary px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); border: 1px solid #3b82f6; border-radius: 8px; font-size: 0.86rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+        <i class="bi bi-code-slash"></i> Department Projects
+      </a>
+      <a href="{{ url_for('innovation_club') }}" class="btn btn-outline-light px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px; font-size: 0.86rem;">
+        <i class="bi bi-lightbulb-fill text-cyan"></i> Innovation Lab
+      </a>
+      <a href="#messages-corner" class="btn btn-outline-light px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px; font-size: 0.86rem;">
+        <i class="bi bi-broadcast text-cyan"></i> Faculty Notices
+      </a>
+      <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-light px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px; font-size: 0.86rem;">
+        <i class="bi bi-person-workspace text-cyan"></i> Student Portal
+      </a>
+    </div>
+
+    <!-- Real-Time Metrics Ticker Banner -->
+    <div class="row g-3 justify-content-center mb-2">
+      <div class="col-6 col-md-3">
+        <div class="stat-card-modern text-center py-2 px-2.5">
+          <div class="stat-number text-gradient-cyan brand-font" style="font-size: 1.45rem;">{{ stats.students if stats.students else '500+' }}</div>
+          <div class="text-white text-xs fw-semibold mt-0.5">Students Enrolled</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card-modern text-center py-2 px-2.5">
+          <div class="stat-number text-gradient-brand brand-font" style="font-size: 1.45rem;">{{ stats.projects if stats.projects else '60+' }}</div>
+          <div class="text-white text-xs fw-semibold mt-0.5">AI Projects Approved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card-modern text-center py-2 px-2.5">
+          <div class="stat-number text-gradient-gold brand-font" style="font-size: 1.45rem;">{{ stats.achievements if stats.achievements else '15+' }}</div>
+          <div class="text-white text-xs fw-semibold mt-0.5">Milestones &amp; Awards</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card-modern text-center py-2 px-2.5">
+          <div class="stat-number text-gradient-cyan brand-font" style="font-size: 1.45rem;">{{ stats.faculty if stats.faculty else '10+' }}</div>
+          <div class="text-white text-xs fw-semibold mt-0.5">Faculty &amp; Mentors</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========================================================================
+     2. FACULTY MESSAGE CORNER (DYNAMIC NOTICES FROM FACULTY)
+     ======================================================================== -->
+<section class="py-5" id="messages-corner">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-3">
+      <div>
+        <div class="d-inline-flex align-items-center gap-2 text-cyan text-uppercase fw-bold text-xs tracking-wider mb-1">
+          <i class="bi bi-broadcast"></i> Live Department Advisories
+        </div>
+        <h2 class="display-6 fw-bold text-white mb-0">Faculty Message Corner</h2>
+        <p class="text-slate-muted mb-0 small">Official announcements, project deadlines, and research calls directly from faculty mentors.</p>
+      </div>
+      <div class="mt-2 mt-md-0">
+        <a href="{{ url_for('message_corner') }}" class="btn-outline-cyan">
+          View All Messages <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      {% for m in messages %}
+        <div class="col-md-6 col-lg-4">
+          <div class="message-corner-card h-100 d-flex flex-column justify-content-between
+            {% if m.priority == 'Urgent' %}message-priority-urgent
+            {% elif m.priority == 'Important' %}message-priority-important
+            {% else %}message-priority-normal{% endif %}">
+            
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge 
+                  {% if m.priority == 'Urgent' %}bg-danger
+                  {% elif m.priority == 'Important' %}bg-warning text-dark
+                  {% else %}bg-info text-dark{% endif %}" style="font-size: 0.72rem;">
+                  {{ m.category }} &bull; {{ m.priority }}
+                </span>
+                <span class="text-slate-muted" style="font-size: 0.75rem;">
+                  <i class="bi bi-clock me-1"></i>{{ m.created_at[:10] }}
+                </span>
+              </div>
+              <h5 class="fw-bold text-white mb-2">{{ m.title }}</h5>
+              <p class="text-slate-muted small mb-3" style="line-height: 1.5;">
+                {{ m.content }}
+              </p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 pt-2 border-top border-secondary border-opacity-30 mt-auto">
+              <img src="{{ m.faculty_avatar if m.faculty_avatar else url_for('static', filename='img/mehraj.png') }}" alt="{{ m.faculty_name }}" width="36" height="36" class="rounded-circle border border-info" style="object-fit: cover;">
+              <div>
+                <div class="fw-semibold text-white small lh-1">{{ m.faculty_name }}</div>
+                <div class="text-slate-muted" style="font-size: 0.72rem;">{{ m.faculty_designation }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12">
+          <div class="glass-panel p-4 text-center text-slate-muted">
+            <i class="bi bi-chat-square-text fs-2 text-cyan d-block mb-2"></i>
+            No active faculty announcements right now. Check back soon!
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     3. DYNAMIC ACHIEVEMENTS & MILESTONES (FROM ADMIN SIDE)
+     ======================================================================== -->
+<section class="py-5" style="background: rgba(14, 21, 38, 0.45);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="d-inline-flex align-items-center gap-2 text-warning text-uppercase fw-bold text-xs tracking-wider mb-1">
+        <i class="bi bi-trophy-fill"></i> Milestones of Excellence
+      </div>
+      <h2 class="display-6 fw-bold text-white mb-2">Our Achievements & Honors</h2>
+      <p class="text-slate-muted mx-auto" style="max-width: 600px;">
+        Curated achievements managed dynamically by department leadership, showcasing regional, national, and global triumphs.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      {% for a in achievements %}
+        <div class="col-md-6 col-lg-4">
+          <div class="achievement-card-dynamic">
+            <div class="achievement-img-wrap">
+              <img src="{{ a.image_url if a.image_url else url_for('static', filename='img/nit.jpg') }}" alt="{{ a.title }}" onerror="this.src='{{ url_for('static', filename='img/nit.jpg') }}'">
+              <div class="achievement-badge-floating">
+                <i class="bi bi-award-fill me-1"></i> {{ a.badge }}
+              </div>
+            </div>
+            <div class="p-4 d-flex flex-column flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-primary bg-opacity-25 text-cyan border border-primary border-opacity-40" style="font-size: 0.74rem;">{{ a.category }}</span>
+                <span class="text-slate-muted" style="font-size: 0.75rem;"><i class="bi bi-calendar3 me-1"></i>{{ a.date }}</span>
+              </div>
+              <h5 class="fw-bold text-white mb-2">{{ a.title }}</h5>
+              <p class="text-slate-muted small mb-0 flex-grow-1" style="line-height: 1.55;">
+                {{ a.description }}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12 text-center text-slate-muted">
+          <p>No achievements recorded yet.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     4. FEATURED DEPARTMENT STUDENT PROJECTS SHOWCASE
+     ======================================================================== -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+      <div>
+        <div class="d-inline-flex align-items-center gap-2 text-indigo text-uppercase fw-bold text-xs tracking-wider mb-1">
+          <i class="bi bi-cpu-fill"></i> Student Innovation Hub
+        </div>
+        <h2 class="display-6 fw-bold text-white mb-0">Featured Department Projects</h2>
+        <p class="text-slate-muted mb-0 small">Approved Capstone and AI prototypes designed and developed by department students.</p>
+      </div>
+      <div class="mt-2 mt-md-0">
+        <a href="{{ url_for('projects_showcase') }}" class="btn-outline-cyan">
+          Browse Project Gallery <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      {% for p in featured_projects %}
+        <div class="col-md-6 col-lg-4">
+          <div class="project-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30" style="font-size: 0.75rem;">
+                {{ p.category }}
+              </span>
+              <span class="badge-status-approved">
+                <i class="bi bi-check-circle-fill"></i> Approved
+              </span>
+            </div>
+            
+            <h5 class="fw-bold text-white mb-2">
+              <a href="{{ url_for('project_detail', project_id=p.id) }}" class="text-white text-decoration-none hover-cyan">
+                {{ p.title }}
+              </a>
+            </h5>
+            
+            <p class="text-slate-muted small mb-3 flex-grow-1" style="line-height: 1.5;">
+              {{ p.abstract[:140] }}{% if p.abstract|length > 140 %}...{% endif %}
+            </p>
+
+            <!-- Tech Stack Tags -->
+            {% if p.tech_stack %}
+              <div class="d-flex flex-wrap gap-1 mb-3">
+                {% for tech in p.tech_stack.split(',') %}
+                  <span class="tech-tag">{{ tech.strip() }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="pt-3 border-top border-secondary border-opacity-30 d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-slate-muted d-block" style="font-size: 0.72rem;">Developed By</small>
+                <span class="fw-semibold text-white small">{{ p.student_name }}</span>
+              </div>
+
+              <div class="d-flex align-items-center gap-1.5">
+                <a href="{{ url_for('project_detail', project_id=p.id) }}" class="btn btn-outline-cyan btn-sm py-1 px-2.5" title="View Full Project Specifications">
+                  <i class="bi bi-eye-fill me-1"></i> Details
+                </a>
+                {% if p.github_url %}
+                  <a href="{{ p.github_url }}" target="_blank" class="btn btn-glass p-1.5" title="GitHub Repository">
+                    <i class="bi bi-github fs-6"></i>
+                  </a>
+                {% endif %}
+                {% if p.demo_url %}
+                  <a href="{{ p.demo_url }}" target="_blank" class="btn btn-glass p-1.5 text-cyan" title="Live Prototype">
+                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12">
+          <div class="glass-panel p-4 text-center text-slate-muted">
+            <i class="bi bi-folder-x fs-2 text-cyan d-block mb-2"></i>
+            No student projects approved yet. Students can submit their projects from the Student Corner!
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     4B. INNOVATION CLUB & 3D RESEARCH PROTOTYPES SPOTLIGHT
+     ======================================================================== -->
+<section class="py-5 position-relative overflow-hidden" style="background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(14, 21, 38, 0.95) 100%);">
+  <div class="container position-relative z-1">
+    <div class="glass-panel p-4 p-lg-5 border-pink shadow-2xl" style="background: radial-gradient(circle at 10% 20%, rgba(244, 63, 94, 0.12) 0%, rgba(15, 23, 42, 0.94) 80%); border-color: rgba(244, 63, 94, 0.35) !important;">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+          <div class="d-inline-flex align-items-center gap-2 text-pink text-uppercase fw-bold text-xs tracking-wider mb-2">
+            <span class="live-dot" style="background: #f43f5e;"></span>
+            Flagship Engineering &amp; AI Prototyping Space &bull; GVEI
+          </div>
+          <h2 class="display-6 fw-bold text-white mb-3 brand-font">
+            Department <span class="text-gradient-brand">Innovation Club</span>
+          </h2>
+          <p class="text-slate-muted mb-4 lead" style="font-size: 1.05rem; line-height: 1.65;">
+            An elite research and prototyping collective architected by <strong>Er. Mehraj U Din Mir (HOD AI&amp;ICT GVEI)</strong>. Students collaborate on autonomous aerial robotics, computer vision pipelines, multi-modal LLM fine-tuning, and hardware-accelerated edge intelligence.
+          </p>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-30 tech-feature-card">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="bi bi-airplane-engines-fill text-cyan fs-5"></i>
+                  <strong class="text-white small">Autonomous Robotics</strong>
+                </div>
+                <div class="text-slate-muted text-xs">ROS2 &bull; Quadrotor Flight &bull; SLAM Nav</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-30 tech-feature-card">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="bi bi-cpu-fill text-pink fs-5"></i>
+                  <strong class="text-white small">Generative AI &amp; LLMs</strong>
+                </div>
+                <div class="text-slate-muted text-xs">LoRA &bull; Agentic Workflows &bull; Diffusion</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-30 tech-feature-card">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="bi bi-gpu-card text-indigo fs-5"></i>
+                  <strong class="text-white small">Edge AI &amp; Hardware</strong>
+                </div>
+                <div class="text-slate-muted text-xs">TensorRT &bull; Jetson Orin &bull; ESP32 Neural</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-30 tech-feature-card">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="bi bi-shield-lock-fill text-emerald fs-5"></i>
+                  <strong class="text-white small">Cyber Systems</strong>
+                </div>
+                <div class="text-slate-muted text-xs">Zero-Trust &bull; Threat Audits &bull; Quantum</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2.5">
+            <a href="{{ url_for('innovation_club') }}" class="btn btn-primary px-3.5 py-2 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); border: 1px solid #3b82f6; border-radius: 8px;">
+              <i class="bi bi-lightbulb-fill"></i> Explore Innovation &amp; Prototyping Lab
+            </a>
+            <a href="{{ url_for('projects_showcase') }}" class="btn btn-outline-light px-3.5 py-2 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px;">
+              <i class="bi bi-collection"></i> View Active Prototypes
+            </a>
+          </div>
+        </div>
+
+        <div class="col-lg-5 text-center">
+          <div class="position-relative p-4 rounded-3" style="background: rgba(13, 20, 36, 0.85); border: 1px solid rgba(148, 163, 184, 0.18); box-shadow: 0 16px 36px rgba(0,0,0,0.5);">
+            <div class="stat-icon-wrapper mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem; background: rgba(37, 99, 235, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25);">
+              <i class="bi bi-motherboard"></i>
+            </div>
+            <h4 class="fw-bold text-white mb-2 brand-font fs-5">Department Prototyping Testbeds</h4>
+            <p class="text-slate-muted small mb-3.5" style="line-height: 1.6;">
+              Equipped with dedicated micro-controller benches, edge compute stations, and active faculty mentorship under Er. Mehraj U Din Mir.
+            </p>
+            <div class="d-flex justify-content-center flex-wrap gap-2">
+              <span class="badge bg-dark bg-opacity-75 border border-secondary border-opacity-30 text-slate-muted px-2.5 py-1.5 text-xs"><i class="bi bi-cpu text-primary me-1"></i> Edge Hardware Lab</span>
+              <span class="badge bg-dark bg-opacity-75 border border-secondary border-opacity-30 text-slate-muted px-2.5 py-1.5 text-xs"><i class="bi bi-diagram-3 text-primary me-1"></i> Faculty Supervised</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     5. FACULTY & LEADERSHIP DIRECTORY (DYNAMIC FROM DB)
+     ======================================================================== -->
+<section class="py-5" id="faculty" style="background: rgba(14, 21, 38, 0.45);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="d-inline-flex align-items-center gap-2 text-cyan text-uppercase fw-bold text-xs tracking-wider mb-1">
+        <i class="bi bi-mortarboard-fill"></i> Faculty & Research Mentors
+      </div>
+      <h2 class="display-6 fw-bold text-white mb-2">Meet Our Distinguished Faculty</h2>
+      <p class="text-slate-muted mx-auto" style="max-width: 600px;">
+        Led by passionate educators and industry-certified trainers dedicated to shaping world-class AI engineers.
+      </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      {% for f in faculty_members %}
+        <div class="col-md-6 col-lg-4">
+          <div class="faculty-card-modern">
+            <div class="faculty-avatar-wrap">
+              <img src="{{ f.avatar if f.avatar else url_for('static', filename='img/mehraj.png') }}" alt="{{ f.name }}" onerror="this.src='{{ url_for('static', filename='img/mehraj.png') }}'">
+            </div>
+            <h5 class="fw-bold text-white mb-1">{{ f.name }}</h5>
+            <div class="text-cyan small fw-semibold mb-2">{{ f.designation }}</div>
+            <span class="badge bg-info bg-opacity-20 text-cyan border border-info border-opacity-35 mb-3" style="font-size: 0.76rem;">
+              {{ f.specialization }}
+            </span>
+            <p class="text-slate-muted small mb-3 flex-grow-1" style="line-height: 1.5;">
+              {{ f.bio if f.bio else 'Dedicated mentor actively guiding students in advanced machine learning, system design, and AI hackathon competitions.' }}
+            </p>
+            <div class="w-100 pt-3 border-top border-secondary border-opacity-30 d-flex justify-content-around">
+              <a href="mailto:{{ f.email }}" class="text-slate-muted small text-decoration-none hover-cyan">
+                <i class="bi bi-envelope-fill me-1 text-cyan"></i> {{ f.email }}
+              </a>
+              {% if f.phone %}
+                <span class="text-slate-muted small">
+                  <i class="bi bi-telephone-fill me-1 text-cyan"></i> {{ f.phone }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     6. DEPARTMENT WINGS & ACTION HUBS
+     ======================================================================== -->
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      
+      <!-- Student Corner Card -->
+      <div class="col-md-4">
+        <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between glass-panel-hover">
+          <div>
+            <div class="stat-icon-wrapper mb-3">
+              <i class="bi bi-person-workspace"></i>
+            </div>
+            <h4 class="fw-bold text-white mb-2">Student Corner</h4>
+            <p class="text-slate-muted small mb-4">
+              Submit capstone projects, track faculty review feedback, manage activity participations, and view your academic club status.
+            </p>
+          </div>
+          <a href="{{ url_for('student_dashboard') }}" class="btn-primary-glow w-100">
+            Open Student Corner <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Activities & Hackathons Card -->
+      <div class="col-md-4">
+        <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between glass-panel-hover">
+          <div>
+            <div class="stat-icon-wrapper mb-3" style="color: #10b981; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25);">
+              <i class="bi bi-calendar2-week"></i>
+            </div>
+            <h4 class="fw-bold text-white mb-2">Department Activities</h4>
+            <p class="text-slate-muted small mb-4">
+              Participate in hands-on workshops, transformer bootcamps, coding hackathons, and submit participation certificates for verification.
+            </p>
+          </div>
+          <a href="{{ url_for('activities') }}" class="btn-glass w-100 justify-content-center">
+            Explore Activities <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- AI Skill Club Card -->
+      <div class="col-md-4">
+        <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between glass-panel-hover">
+          <div>
+            <div class="stat-icon-wrapper mb-3" style="color: #ec4899; background: rgba(236, 72, 153, 0.12); border-color: rgba(236, 72, 153, 0.25);">
+              <i class="bi bi-cpu"></i>
+            </div>
+            <h4 class="fw-bold text-white mb-2">AI Skill Club</h4>
+            <p class="text-slate-muted small mb-4">
+              Join the student-driven AI community for collaborative open-source AI builds, Kaggle hackathons, and peer research discussions.
+            </p>
+          </div>
+          <a href="{{ url_for('club_register') }}" class="btn-secondary-glow w-100">
+            Register for AI Club <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     7. CALL TO ACTION BANNER
+     ======================================================================== -->
+<section class="py-5">
+  <div class="container">
+    <div class="glass-panel p-5 text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%); border: 1px solid rgba(56, 189, 248, 0.3);">
+      <h2 class="display-6 fw-bold text-white mb-3">Ready to Build the Future with AI?</h2>
+      <p class="text-slate-muted mx-auto mb-4" style="max-width: 600px;">
+        Submit your project abstract, collaborate with leading faculty mentors, or apply to join the AI Skill Club today.
+      </p>
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a href="{{ url_for('student_register') }}" class="btn-primary-glow">
+          <i class="bi bi-person-plus"></i> Register Student Account
+        </a>
+        <a href="{{ url_for('student_login') }}" class="btn-glass">
+          <i class="bi bi-box-arrow-in-right"></i> Student Portal Sign In
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

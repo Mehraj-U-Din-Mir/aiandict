@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+{% block title %}Departmental Documents & Academic Archive — AI & ICT{% endblock %}
+
+{% block body %}
+<div class="container my-3 my-md-4 py-2">
+
+  <!-- ========================================================================
+       TOP HEADER & BREADCRUMB
+       ======================================================================== -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <div class="d-inline-flex align-items-center gap-2 text-rose text-uppercase fw-bold text-xs tracking-wider mb-1">
+        <i class="bi bi-shield-lock-fill"></i> Official Departmental Archive &bull; GVEI
+      </div>
+      <h1 class="display-6 fw-bold text-white mb-1 brand-font">
+        Departmental <span class="text-gradient-cyan">Documents</span>
+      </h1>
+      <p class="text-slate-muted small mb-0">
+        Curriculum syllabi, capstone guidelines, laboratory safety manuals, ethics policies, and research handbooks.
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      {% if unlocked %}
+      <span
+        class="badge bg-success bg-opacity-20 text-emerald border border-success border-opacity-30 px-3 py-2 text-xs d-inline-flex align-items-center gap-1.5">
+        <span class="live-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+        Archive Unlocked &bull; Authorized Session
+      </span>
+      <a href="{{ url_for('documents_lock') }}" class="btn btn-glass btn-sm d-inline-flex align-items-center gap-1.5"
+        title="Lock and exit document archive">
+        <i class="bi bi-lock-fill text-danger"></i> Lock Archive
+      </a>
+      {% else %}
+      <span
+        class="badge bg-danger bg-opacity-20 text-rose border border-danger border-opacity-30 px-3 py-2 text-xs d-inline-flex align-items-center gap-1.5">
+        <i class="bi bi-lock-fill"></i> Protected Access &bull; Passcode Required
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not unlocked %}
+  <!-- ========================================================================
+       LOCKED STATE: ELEGANT SECURITY PASSCODE CARD (ict@123)
+       ======================================================================== -->
+  <div class="row justify-content-center py-4 py-md-5">
+    <div class="col-lg-5 col-md-7 col-sm-9">
+
+      <div class="glass-panel p-4 p-md-5 position-relative overflow-hidden shadow-2xl">
+        <!-- Top Accent Strip -->
+        <div
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #f43f5e, #8b5cf6, #06b6d4);">
+        </div>
+
+        <div class="text-center mb-4">
+          <div class="stat-icon-wrapper mx-auto mb-3"
+            style="width: 58px; height: 58px; font-size: 1.65rem; background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35);">
+            <i class="bi bi-file-earmark-lock2-fill"></i>
+          </div>
+          <h3 class="fw-bold text-white brand-font mb-1 fs-4">Protected Academic Archive</h3>
+          <p class="text-slate-muted small mb-0" style="font-size: 0.85rem; line-height: 1.5;">
+            This repository contains official department syllabi, grading rubrics, and laboratory protocols under the
+            supervision of <strong>Er. Mehraj U Din Mir (HOD AI&amp;ICT)</strong>.
+          </p>
+        </div>
+
+        <!-- Clear Passcode Notice -->
+        <div class="p-3 rounded-3 mb-4"
+          style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);">
+          <div class="d-flex align-items-start gap-2.5">
+            <i class="bi bi-key-fill text-cyan fs-5 mt-0.5"></i>
+            <div>
+              <div class="text-white small fw-bold">Department Security Passcode</div>
+              <div class="text-slate-muted text-xs mt-0.5">
+                Enter hardcoded department password <code
+                  class="text-cyan bg-dark bg-opacity-75 px-1.5 py-0.5 rounded fw-bold border border-cyan border-opacity-30">**********</code>
+                to access official PDF documents.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unlock Form -->
+        <form method="post" action="{{ url_for('documents_unlock') }}" class="d-grid gap-3">
+          <div>
+            <label class="form-label-modern small mb-1.5">
+              <i class="bi bi-shield-check text-cyan"></i> Enter Department Passcode
+            </label>
+            <div class="position-relative">
+              <input class="form-control form-control-modern py-2.5 pe-5 font-monospace" id="docPasscodeInput"
+                name="password" type="password" placeholder="********" required autocomplete="current-password"
+                autofocus>
+              <button type="button"
+                class="btn btn-sm text-slate-muted position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent"
+                onclick="togglePasscodeVisibility()" title="Show/Hide Password">
+                <i class="bi bi-eye" id="togglePasscodeIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary-glow w-100 py-2.5 mt-1"
+            style="background: linear-gradient(135deg, #0284c7, #2563eb);">
+            <i class="bi bi-unlock-fill me-1.5"></i> Unlock &amp; View Documents
+          </button>
+        </form>
+
+        <div class="text-center mt-3 pt-3 border-top border-secondary border-opacity-20">
+          <small class="text-slate-subtle" style="font-size: 0.73rem;">
+            <i class="bi bi-database-check text-emerald me-1"></i> Synced with Supabase Cloud PostgreSQL Schema
+          </small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ========================================================================
+       UNLOCKED STATE: STATS, FILTER BAR & DEPARTMENT DOCUMENTS TABLE
+       ======================================================================== -->
+
+  <!-- Top Metrics Bar -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card-modern py-2.5 px-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-slate-muted text-xs">Total Records</div>
+            <div class="stat-number text-gradient-cyan brand-font" style="font-size: 1.5rem;">{{ documents|length }}
+            </div>
+          </div>
+          <div class="stat-icon-wrapper" style="width: 38px; height: 38px; font-size: 1.15rem;">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card-modern py-2.5 px-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-slate-muted text-xs">Categories</div>
+            <div class="stat-number text-gradient-brand brand-font" style="font-size: 1.5rem;">{{ categories|length }}
+            </div>
+          </div>
+          <div class="stat-icon-wrapper"
+            style="width: 38px; height: 38px; font-size: 1.15rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">
+            <i class="bi bi-collection-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card-modern py-2.5 px-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-slate-muted text-xs">Supabase Sync</div>
+            <div class="stat-number text-gradient-gold brand-font" style="font-size: 1.5rem;">
+              {{ 'Active' if supabase_synced else 'Local DB' }}
+            </div>
+          </div>
+          <div class="stat-icon-wrapper"
+            style="width: 38px; height: 38px; font-size: 1.15rem; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">
+            <i class="bi bi-cloud-check-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card-modern py-2.5 px-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-slate-muted text-xs">Archive Authority</div>
+            <div class="text-white text-xs fw-bold mt-1">Er. Mehraj U Din Mir</div>
+            <div class="text-slate-muted text-xs" style="font-size: 0.68rem;">HOD AI&amp;ICT GVEI</div>
+          </div>
+          <div class="stat-icon-wrapper"
+            style="width: 38px; height: 38px; font-size: 1.15rem; background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+            <i class="bi bi-patch-check-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Category Filters -->
+  <div class="glass-panel p-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2.5">
+      <!-- Category Pills -->
+      <div class="d-flex flex-wrap gap-1.5">
+        <a href="{{ url_for('documents_page') }}"
+          class="btn btn-sm {{ 'btn-primary-glow' if active_category == 'All' else 'btn-glass' }} py-1 px-3 text-xs">
+          All Records
+        </a>
+        {% for cat in categories %}
+        <a href="{{ url_for('documents_page', category=cat) }}"
+          class="btn btn-sm {{ 'btn-primary-glow' if active_category == cat else 'btn-glass' }} py-1 px-3 text-xs">
+          {{ cat }}
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Live Search Form -->
+      <form method="get" action="{{ url_for('documents_page') }}" class="d-flex gap-1.5" style="min-width: 260px;">
+        {% if active_category and active_category != 'All' %}
+        <input type="hidden" name="category" value="{{ active_category }}">
+        {% endif %}
+        <input class="form-control form-control-modern form-control-sm py-1" type="text" name="q"
+          placeholder="Search by title, keyword..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-outline-cyan btn-sm px-3">
+          <i class="bi bi-search"></i>
+        </button>
+        {% if search_query %}
+        <a href="{{ url_for('documents_page', category=active_category if active_category != 'All' else None) }}"
+          class="btn btn-glass btn-sm px-2 text-slate-muted" title="Clear filter">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Documents Table -->
+  <div class="table-modern-wrapper shadow-2xl mb-4">
+    <div class="table-responsive">
+      <table class="table-modern mb-0">
+        <thead>
+          <tr>
+            <th style="min-width: 280px;"><i class="bi bi-file-text me-1 text-cyan"></i> Document Title &amp; Details
+            </th>
+            <th style="min-width: 150px;"><i class="bi bi-tag me-1 text-cyan"></i> Classification</th>
+            <th style="min-width: 100px;"><i class="bi bi-layers me-1 text-cyan"></i> Version</th>
+            <th style="min-width: 90px;"><i class="bi bi-hdd me-1 text-cyan"></i> Size</th>
+            <th style="min-width: 100px;"><i class="bi bi-cloud-arrow-down me-1 text-cyan"></i> Downloads</th>
+            <th class="text-end" style="min-width: 170px;"><i class="bi bi-gear me-1 text-cyan"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in documents %}
+          <tr>
+            <!-- Document Title & Description -->
+            <td>
+              <div class="d-flex align-items-start gap-2.5">
+                <div class="stat-icon-wrapper flex-shrink-0 mt-0.5"
+                  style="width: 36px; height: 36px; font-size: 1.15rem; background: rgba(244, 63, 94, 0.14); color: #fb7185; border-color: rgba(244, 63, 94, 0.3);">
+                  <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-white small lh-sm mb-1 hover-cyan" style="font-size: 0.92rem;">
+                    {{ doc.title }}
+                  </div>
+                  <div class="text-slate-muted text-xs line-clamp-2"
+                    style="font-size: 0.77rem; max-width: 480px; line-height: 1.45;">
+                    {{ doc.description }}
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mt-1" style="font-size: 0.7rem; color: #94a3b8;">
+                    <span><i class="bi bi-person me-1"></i>{{ doc.uploaded_by }}</span>
+                    <span>&bull;</span>
+                    <span><i class="bi bi-clock me-1"></i>{{ doc.created_at[:10] if doc.created_at else '2026-02'
+                      }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Classification Badge -->
+            <td>
+              <span class="badge 
+                  {% if doc.category == 'Curriculum & Syllabus' %}bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-35
+                  {% elif doc.category == 'Academic Guidelines' %}bg-warning bg-opacity-20 text-amber border border-warning border-opacity-35
+                  {% elif doc.category == 'Lab Protocols' %}bg-success bg-opacity-20 text-emerald border border-success border-opacity-35
+                  {% elif doc.category == 'Ethics & Policy' %}bg-danger bg-opacity-20 text-rose border border-danger border-opacity-35
+                  {% else %}bg-info bg-opacity-20 text-cyan border border-info border-opacity-35{% endif %}"
+                style="font-size: 0.74rem; font-weight: 600; padding: 4px 8px;">
+                {{ doc.category }}
+              </span>
+            </td>
+
+            <!-- Version -->
+            <td>
+              <span class="badge bg-dark bg-opacity-60 text-slate-muted border border-secondary border-opacity-30"
+                style="font-family: var(--font-code); font-size: 0.72rem;">
+                {{ doc.version }}
+              </span>
+            </td>
+
+            <!-- Size -->
+            <td>
+              <span class="text-slate-muted text-xs" style="font-family: var(--font-code);">
+                {{ doc.file_size }}
+              </span>
+            </td>
+
+            <!-- Downloads -->
+            <td>
+              <span
+                class="badge bg-secondary bg-opacity-20 text-slate-muted border border-secondary border-opacity-20 text-xs">
+                <i class="bi bi-download me-1 text-cyan"></i>{{ doc.downloads_count }}
+              </span>
+            </td>
+
+            <!-- Action Controls: Eye (View Inline) & Download -->
+            <td class="text-end">
+              <div class="d-inline-flex align-items-center gap-1.5">
+
+                <!-- Eye Icon Button: Opens Document in the in-page Professional Viewer without opening new tab -->
+                <button type="button"
+                  class="btn btn-outline-cyan btn-sm py-1 px-2.5 d-inline-flex align-items-center gap-1 doc-read-btn"
+                  data-doc-id="{{ doc.id }}"
+                  data-title="{{ doc.title }}"
+                  data-file-url="{{ doc.file_url }}"
+                  data-category="{{ doc.category }}"
+                  data-version="{{ doc.version }}"
+                  data-file-size="{{ doc.file_size }}"
+                  data-download-url="{{ url_for('documents_download', doc_id=doc.id) }}"
+                  onclick="handleDocViewerClick(this)"
+                  title="View PDF Document Inside Page">
+                  <i class="bi bi-eye-fill"></i>
+                  <span>Read</span>
+                </button>
+
+                <!-- Download Icon Button: Directly downloads the same PDF -->
+                <a href="{{ url_for('documents_download', doc_id=doc.id) }}"
+                  class="btn btn-glass btn-sm py-1 px-2 text-cyan" title="Download Official PDF File">
+                  <i class="bi bi-download"></i>
+                </a>
+
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-slate-muted">
+              <i class="bi bi-folder-x fs-2 text-cyan d-block mb-2"></i>
+              No documents found matching the selected filter criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- ========================================================================
+     PROFESSIONAL IN-PAGE DOCUMENT VIEWER MODAL
+     (Opens in-place without navigating away or opening a new browser tab)
+     ======================================================================== -->
+<div class="modal fade" id="docViewerModal" tabindex="-1" aria-labelledby="docViewerModalTitle" aria-hidden="true"
+  data-bs-backdrop="static">
+  <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl"
+      style="background: rgba(10, 16, 32, 0.98); border-color: rgba(56, 189, 248, 0.4) !important; border-radius: 20px; overflow: hidden;">
+
+      <!-- Top Viewer Luxury Toolbar Header -->
+      <div
+        class="modal-header border-bottom border-secondary border-opacity-30 py-2.5 px-3 px-md-4 d-flex align-items-center justify-content-between"
+        style="background: rgba(15, 23, 42, 0.9);">
+
+        <div class="d-flex align-items-center gap-2.5 text-truncate me-2">
+          <div class="stat-icon-wrapper flex-shrink-0"
+            style="width: 34px; height: 34px; font-size: 1.1rem; background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3);">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+          </div>
+          <div class="text-truncate">
+            <h5 class="modal-title fw-bold text-white fs-6 mb-0 text-truncate" id="docViewerModalTitle">
+              Document Viewer
+            </h5>
+            <div class="d-flex align-items-center gap-2 mt-0.5" style="font-size: 0.72rem;">
+              <span class="badge bg-primary bg-opacity-25 text-cyan py-0.5 px-2"
+                id="docViewerCategory">Curriculum</span>
+              <span class="text-slate-muted" id="docViewerMeta">v1.0 &bull; 1.2 MB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar Action Controls -->
+        <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+
+          <!-- Zoom Controls -->
+          <div class="btn-group btn-group-sm d-none d-sm-inline-flex me-1">
+            <button type="button" class="btn btn-glass py-1 px-2" onclick="adjustViewerZoom(-0.15)" title="Zoom Out">
+              <i class="bi bi-zoom-out"></i>
+            </button>
+            <button type="button" class="btn btn-glass py-1 px-2 text-slate-muted font-monospace" id="zoomPercentText"
+              onclick="adjustViewerZoom(0, true)" title="Reset Zoom">
+              100%
+            </button>
+            <button type="button" class="btn btn-glass py-1 px-2" onclick="adjustViewerZoom(0.15)" title="Zoom In">
+              <i class="bi bi-zoom-in"></i>
+            </button>
+          </div>
+
+          <!-- Direct Download PDF Button -->
+          <a href="#" id="docViewerDownloadBtn"
+            class="btn btn-primary-glow btn-sm py-1 px-2.5 d-inline-flex align-items-center gap-1 text-xs"
+            title="Download Document">
+            <i class="bi bi-download"></i>
+            <span class="d-none d-sm-inline">Download PDF</span>
+          </a>
+
+          <!-- Fullscreen Toggle -->
+          <button type="button" class="btn btn-glass btn-sm py-1 px-2 text-slate-muted d-none d-md-inline-block"
+            onclick="toggleViewerFullscreen()" title="Toggle Fullscreen">
+            <i class="bi bi-arrows-fullscreen" id="fsIcon"></i>
+          </button>
+
+          <!-- Direct Open Button -->
+          <a href="#" id="docViewerDirectLink" target="_blank" rel="noopener"
+            class="btn btn-glass btn-sm py-1 px-2 text-slate-muted" title="Open PDF in new tab if needed">
+            <i class="bi bi-box-arrow-up-right"></i>
+          </a>
+
+          <!-- Close Modal -->
+          <button type="button" class="btn-close btn-close-white ms-1" data-bs-dismiss="modal" aria-label="Close"
+            title="Close Document Viewer"></button>
+
+        </div>
+      </div>
+
+      <!-- Main Viewer Body with Embedded PDF Frame -->
+      <div class="modal-body p-0 position-relative" style="background: #090e1a; height: 78vh; max-height: 85vh;">
+
+        <!-- Loading Spinner -->
+        <div id="viewerLoadingSpinner"
+          class="position-absolute top-50 start-50 translate-middle text-center text-cyan z-1">
+          <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+          <div class="text-slate-muted small">Loading Departmental Document...</div>
+        </div>
+
+        <!-- Embedded PDF Viewport (Inline Frame) -->
+        <iframe id="docViewerFrame" src="" class="w-100 h-100 position-relative z-2"
+          style="border: none; background: #090e1a; transition: transform 0.2s ease;" onload="onIframeLoaded()">
+        </iframe>
+
+      </div>
+
+      <!-- Viewer Footer Bar -->
+      <div
+        class="modal-footer border-top border-secondary border-opacity-20 py-2 px-3 px-md-4 d-flex justify-content-between align-items-center"
+        style="background: rgba(14, 21, 38, 0.9);">
+        <small class="text-slate-subtle" style="font-size: 0.74rem;">
+          <i class="bi bi-shield-check text-cyan me-1"></i> Department of AI &amp; ICT &bull; Official Digital Document
+          Archive
+        </small>
+        <button type="button" class="btn btn-glass btn-sm py-1 px-3 text-xs" data-bs-dismiss="modal">
+          Close Viewer
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentZoom = 1.0;
+
+  // Toggle password visibility on lock screen
+  function togglePasscodeVisibility() {
+    const input = document.getElementById("docPasscodeInput");
+    const icon = document.getElementById("togglePasscodeIcon");
+    if (!input) return;
+    if (input.type === "password") {
+      input.type = "text";
+      if (icon) icon.className = "bi bi-eye-slash";
+    } else {
+      input.type = "password";
+      if (icon) icon.className = "bi bi-eye";
+    }
+  }
+
+  // Handler for data-attributed Read buttons
+  function handleDocViewerClick(btn) {
+    if (!btn) return;
+    const docId = btn.getAttribute("data-doc-id");
+    const title = btn.getAttribute("data-title") || "Departmental Document";
+    const fileUrl = btn.getAttribute("data-file-url");
+    const category = btn.getAttribute("data-category") || "Official Record";
+    const version = btn.getAttribute("data-version") || "v2026-2027";
+    const fileSize = btn.getAttribute("data-file-size") || "";
+    const downloadUrl = btn.getAttribute("data-download-url") || fileUrl;
+    openDocViewer(docId, title, fileUrl, category, version, fileSize, downloadUrl);
+  }
+
+  // Open Document Viewer inside page without opening new tab
+  function openDocViewer(docId, title, fileUrl, category, version, fileSize, downloadUrl) {
+    const titleEl = document.getElementById("docViewerModalTitle");
+    const catEl = document.getElementById("docViewerCategory");
+    const metaEl = document.getElementById("docViewerMeta");
+    const downloadBtn = document.getElementById("docViewerDownloadBtn");
+    const directLink = document.getElementById("docViewerDirectLink");
+    const iframe = document.getElementById("docViewerFrame");
+    const spinner = document.getElementById("viewerLoadingSpinner");
+
+    if (titleEl) titleEl.textContent = title;
+    if (catEl) catEl.textContent = category;
+    if (metaEl) metaEl.textContent = `${version} • ${fileSize}`;
+    if (downloadBtn) downloadBtn.href = downloadUrl;
+    if (directLink) directLink.href = fileUrl;
+
+    if (spinner) spinner.style.display = "block";
+    currentZoom = 1.0;
+    updateZoomDisplay();
+
+    // Use embedded PDF url with browser PDF controls disabled for clean layout
+    if (iframe) {
+      iframe.style.transform = "scale(1)";
+      // Append toolbar and scroll parameters
+      iframe.src = fileUrl + (fileUrl.includes("#") ? "" : "#toolbar=1&navpanes=0&scrollbar=1");
+    }
+
+    // Safety timeout to dismiss spinner if browser suppresses load event on iframe
+    setTimeout(() => {
+      if (spinner) spinner.style.display = "none";
+    }, 1500);
+
+    // Show modal using Bootstrap Modal API
+    const modalEl = document.getElementById("docViewerModal");
+    if (modalEl && typeof bootstrap !== "undefined") {
+      const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modalInstance.show();
+    }
+  }
+
+  function onIframeLoaded() {
+    const spinner = document.getElementById("viewerLoadingSpinner");
+    if (spinner) spinner.style.display = "none";
+  }
+
+  function adjustViewerZoom(delta, reset = false) {
+    const iframe = document.getElementById("docViewerFrame");
+    if (reset) {
+      currentZoom = 1.0;
+    } else {
+      currentZoom = Math.min(1.8, Math.max(0.6, currentZoom + delta));
+    }
+    if (iframe) {
+      iframe.style.transform = `scale(${currentZoom})`;
+      iframe.style.transformOrigin = "top center";
+    }
+    updateZoomDisplay();
+  }
+
+  function updateZoomDisplay() {
+    const textEl = document.getElementById("zoomPercentText");
+    if (textEl) {
+      textEl.textContent = Math.round(currentZoom * 100) + "%";
+    }
+  }
+
+  function toggleViewerFullscreen() {
+    const modalContent = document.querySelector("#docViewerModal .modal-content");
+    const icon = document.getElementById("fsIcon");
+    if (!document.fullscreenElement) {
+      if (modalContent.requestFullscreen) {
+        modalContent.requestFullscreen();
+      }
+      if (icon) icon.className = "bi bi-fullscreen-exit";
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      if (icon) icon.className = "bi bi-arrows-fullscreen";
+    }
+  }
+</script>
+{% endblock %}

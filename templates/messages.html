@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Faculty Message Corner — Department Advisories & Notices{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-3 px-xl-4 my-1 my-md-2">
+
+  <!-- Compact Header Banner (Above-the-Fold) -->
+  <div class="glass-panel p-2.5 mb-2 shadow-xl">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h4 class="fw-bold text-white mb-0 brand-font fs-5"><i class="bi bi-broadcast text-amber me-1.5"></i> Faculty Message Corner</h4>
+        <span class="text-slate-muted small" style="font-size: 0.75rem;">Official notices, capstone advisories &amp; lab announcements</span>
+      </div>
+      <div>
+        {% if session.get('user') and session['user']['role'] in ('faculty', 'admin') %}
+          <a href="{{ url_for('faculty_dashboard') }}" class="btn btn-primary-glow btn-sm py-1 px-2.5">
+            <i class="bi bi-megaphone-fill me-1"></i> Post Announcement
+          </a>
+        {% else %}
+          <a href="{{ url_for('faculty_login') }}" class="btn btn-glass btn-sm py-1 px-2.5">
+            <i class="bi bi-mortarboard me-1"></i> Faculty Login
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Feed -->
+  {% if messages %}
+    <div class="row g-3">
+      {% for m in messages %}
+        <div class="col-md-6 col-lg-4">
+          <div class="message-corner-card h-100 d-flex flex-column justify-content-between
+            {% if m.priority == 'Urgent' %}message-priority-urgent
+            {% elif m.priority == 'Important' %}message-priority-important
+            {% else %}message-priority-normal{% endif %}">
+            
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge 
+                  {% if m.priority == 'Urgent' %}bg-danger
+                  {% elif m.priority == 'Important' %}bg-warning text-dark
+                  {% else %}bg-info text-dark{% endif %}" style="font-size: 0.72rem;">
+                  {{ m.category }} &bull; {{ m.priority }}
+                </span>
+                <span class="text-slate-muted" style="font-size: 0.75rem;">
+                  <i class="bi bi-calendar3 me-1"></i>{{ m.created_at[:10] }}
+                </span>
+              </div>
+              <h5 class="fw-bold text-white mb-2">{{ m.title }}</h5>
+              <p class="text-slate-muted small mb-3" style="line-height: 1.55;">
+                {{ m.content }}
+              </p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2.5 pt-3 border-top border-secondary border-opacity-30 mt-auto">
+              <img src="{{ m.faculty_avatar if m.faculty_avatar else url_for('static', filename='img/mehraj.png') }}" alt="{{ m.faculty_name }}" width="40" height="40" class="rounded-circle border border-info" style="object-fit: cover;">
+              <div>
+                <div class="fw-semibold text-white small lh-1">{{ m.faculty_name }}</div>
+                <div class="text-cyan" style="font-size: 0.72rem;">{{ m.faculty_designation }}</div>
+                <div class="text-slate-muted" style="font-size: 0.7rem;">{{ m.faculty_email }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="glass-panel p-5 text-center text-slate-muted">
+      <i class="bi bi-chat-square-dots fs-1 text-cyan opacity-40 d-block mb-3"></i>
+      <h4 class="text-white fw-bold">No Announcements Published Yet</h4>
+      <p class="small mx-auto mb-0">Faculty members can post notices from the Faculty Command Center.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

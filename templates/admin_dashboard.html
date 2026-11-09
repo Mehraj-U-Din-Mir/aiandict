@@ -1,0 +1,1269 @@
+{% extends "base.html" %}
+{% block title %}Department Administration — Central Governance{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-3 px-xl-4 my-2 my-md-2.5">
+
+  <!-- ========================================================================
+       ADMIN EXECUTIVE COMMAND & METRICS RIBBON (Above-the-Fold)
+       ======================================================================== -->
+  <div class="glass-panel p-2.5 p-md-3 mb-2 shadow-xl">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <!-- Left: Identity & Badges -->
+      <div class="d-flex align-items-center gap-2.5">
+        <div class="stat-icon-wrapper" style="width: 40px; height: 40px; font-size: 1.25rem; background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3);">
+          <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-white mb-0 brand-font fs-5">Administrator Control Hub</h4>
+            <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30 px-2.5 py-0.5 rounded-pill small">
+              Super Admin
+            </span>
+          </div>
+          <div class="text-slate-muted small" style="font-size: 0.75rem;">
+            <span><i class="bi bi-envelope me-1"></i> {{ session['user']['email'] }}</span> &bull;
+            <span class="text-cyan">Departmental Governance &amp; Academic Operations</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Inline Metric Pills & CTAs -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-1.5 me-1">
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-indigo py-1.5 px-2 text-xs">
+            <i class="bi bi-person-badge me-1"></i> Faculty: <strong>{{ stats.total_faculty }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-cyan py-1.5 px-2 text-xs">
+            <i class="bi bi-people-fill me-1"></i> Students: <strong>{{ stats.total_students }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-white py-1.5 px-2 text-xs">
+            <i class="bi bi-folder-fill me-1 text-primary"></i> Projects: <strong>{{ stats.total_projects }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-amber py-1.5 px-2 text-xs">
+            <i class="bi bi-hourglass-split me-1"></i> Pending: <strong>{{ stats.pending_projects }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-warning py-1.5 px-2 text-xs">
+            <i class="bi bi-trophy-fill me-1"></i> Awards: <strong>{{ stats.achievements_count }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-pink py-1.5 px-2 text-xs">
+            <i class="bi bi-cpu me-1"></i> Club: <strong>{{ stats.club_regs }}</strong>
+          </span>
+        </div>
+
+        <a href="{{ url_for('faculty_dashboard') }}" class="btn btn-glass btn-sm py-1 px-2.5">
+          <i class="bi bi-mortarboard text-indigo me-1"></i> Faculty View
+        </a>
+        <a href="{{ url_for('admin_ai_skill_club') }}" class="btn btn-glass btn-sm py-1 px-2.5">
+          <i class="bi bi-cpu text-pink me-1"></i> Club Regs ({{ stats.club_regs }})
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm py-1 px-2.5">
+          <i class="bi bi-box-arrow-right"></i> Sign Out
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       TABS NAVIGATION
+       ======================================================================== -->
+  <div class="mb-2">
+    <ul class="nav nav-pills-modern" id="adminTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pills-faculty-tab" data-bs-toggle="pill" data-bs-target="#tab-faculty" type="button" role="tab">
+          <i class="bi bi-person-video3 me-1.5 text-indigo"></i> Faculty Members ({{ faculty|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-achieve-tab" data-bs-toggle="pill" data-bs-target="#tab-achievements" type="button" role="tab">
+          <i class="bi bi-trophy-fill me-1.5 text-warning"></i> Dynamic Achievements ({{ achievements|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-projects-tab" data-bs-toggle="pill" data-bs-target="#tab-projects" type="button" role="tab">
+          <i class="bi bi-code-square me-1.5 text-cyan"></i> Projects Hub ({{ projects|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-students-tab" data-bs-toggle="pill" data-bs-target="#tab-students" type="button" role="tab">
+          <i class="bi bi-people-fill me-1.5 text-emerald"></i> Student Accounts ({{ students|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-activities-tab" data-bs-toggle="pill" data-bs-target="#tab-activities" type="button" role="tab">
+          <i class="bi bi-calendar-event me-1.5 text-pink"></i> Activities & Participations
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-innovation-tab" data-bs-toggle="pill" data-bs-target="#tab-innovation" type="button" role="tab">
+          <i class="bi bi-rocket-takeoff-fill me-1.5 text-pink"></i> Innovation Showcases ({{ innovation_showcases|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-supabase-tab" data-bs-toggle="pill" data-bs-target="#tab-supabase" type="button" role="tab">
+          <i class="bi bi-cloud-arrow-up-fill me-1.5 text-cyan"></i> Supabase Cloud & Architecture
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ========================================================================
+       TAB CONTENTS
+       ======================================================================== -->
+  <div class="tab-content" id="adminTabsContent">
+
+    <!-- 1. FACULTY MANAGEMENT TAB -->
+    <div class="tab-pane fade show active" id="tab-faculty" role="tabpanel">
+      <div class="row g-4">
+        <!-- Add Faculty Form -->
+        <div class="col-lg-4">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-person-plus-fill text-indigo me-2"></i>Add Faculty Member</h4>
+            <p class="text-slate-muted small mb-4">Admin can add faculty with official credentials. Faculty can then log in to manage students & projects.</p>
+
+            <form method="post" action="{{ url_for('admin_add_faculty') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Faculty Full Name *</label>
+                <input class="form-control form-control-modern" name="name" placeholder="e.g., Er. Mehraj U Din Mir" required>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Official Email *</label>
+                <input class="form-control form-control-modern" name="email" type="email" placeholder="faculty@dept.ai" required>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Initial Password *</label>
+                <input class="form-control form-control-modern" name="password" type="password" placeholder="Password for login" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Designation</label>
+                  <input class="form-control form-control-modern" name="designation" placeholder="e.g., Assistant Professor">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Phone Number</label>
+                  <input class="form-control form-control-modern" name="phone" placeholder="+91-...">
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Qualification</label>
+                  <input class="form-control form-control-modern" name="qualification" placeholder="e.g. M.Tech AI, B.Tech">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Experience</label>
+                  <input class="form-control form-control-modern" name="experience" placeholder="e.g. 7+ Years">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Research / Specialization Area</label>
+                <input class="form-control form-control-modern" name="specialization" placeholder="e.g., Computer Vision, Deep Learning, MLOps">
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Office / Lab Room</label>
+                  <input class="form-control form-control-modern" name="office_room" placeholder="e.g. Room 101, Block B">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Avatar Image Path/URL</label>
+                  <input class="form-control form-control-modern" name="avatar" value="/static/img/mehraj.png">
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">LinkedIn Profile URL</label>
+                  <input class="form-control form-control-modern" name="linkedin_url" placeholder="https://linkedin.com/in/...">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">GitHub Profile URL</label>
+                  <input class="form-control form-control-modern" name="github_url" placeholder="https://github.com/...">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Faculty Bio & Vision</label>
+                <textarea class="form-control form-control-modern" name="bio" rows="3" placeholder="Vision and research interests..."></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2">
+                <i class="bi bi-person-check-fill me-1"></i> Register Faculty Member
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Faculty Directory Table -->
+        <div class="col-lg-8">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-3">Department Faculty Directory ({{ faculty|length }})</h4>
+            
+            <div class="table-responsive">
+              <table class="table-modern">
+                <thead>
+                  <tr>
+                    <th>Faculty Name</th>
+                    <th>Email</th>
+                    <th>Designation</th>
+                    <th>Specialization</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in faculty %}
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <img src="{{ f.avatar if f.avatar else url_for('static', filename='img/mehraj.png') }}" width="32" height="32" class="rounded-circle" style="object-fit: cover;">
+                          <div>
+                            <span class="fw-semibold text-white d-block">{{ f.name }}</span>
+                            {% if f.office_room %}<span class="text-slate-muted text-xs"><i class="bi bi-geo-alt me-0.5"></i>{{ f.office_room }}</span>{% endif %}
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-slate-muted small">{{ f.email }}</td>
+                      <td class="text-cyan small">{{ f.designation }}</td>
+                      <td class="text-slate-muted small">{{ f.specialization }}</td>
+                      <td>
+                        <div class="d-flex align-items-center gap-1">
+                          <button type="button" class="btn btn-outline-cyan btn-sm p-1" 
+                                  onclick="openFacultyEditModal({{ f.id }}, '{{ f.name|e }}', '{{ f.email|e }}', '{{ (f.designation or '')|e }}', '{{ (f.specialization or '')|e }}', '{{ (f.phone or '')|e }}', '{{ (f.avatar or '')|e }}', '{{ (f.qualification or '')|e }}', '{{ (f.experience or '')|e }}', '{{ (f.office_room or '')|e }}', '{{ (f.linkedin_url or '')|e }}', '{{ (f.github_url or '')|e }}')" 
+                                  title="Edit Faculty Details">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-warning btn-sm p-1"
+                                  onclick="openResetPasswordModal({{ f.id }}, '{{ f.name|e }}', '{{ f.email|e }}')"
+                                  title="Reset Faculty Password">
+                            <i class="bi bi-key-fill"></i>
+                          </button>
+                          <a href="{{ url_for('admin_delete_faculty', fid=f.id) }}" class="btn btn-outline-danger btn-sm p-1" onclick="return confirm('Remove faculty {{ f.name }}?')" title="Delete Faculty">
+                            <i class="bi bi-trash-fill"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="5" class="text-center text-slate-muted py-4">No faculty members onboarded yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DYNAMIC ACHIEVEMENTS TAB (SYNCED TO LANDING PAGE) -->
+    <div class="tab-pane fade" id="tab-achievements" role="tabpanel">
+      <div class="row g-4">
+        <!-- Add Achievement Form -->
+        <div class="col-lg-4">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-award-fill text-warning me-2"></i>Add Achievement</h4>
+            <p class="text-slate-muted small mb-4">Milestones published here display dynamically on the landing page in real-time.</p>
+
+            <form method="post" action="{{ url_for('admin_create_achievement') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Milestone / Trophy Title *</label>
+                <input class="form-control form-control-modern" name="title" placeholder="e.g., NIT AI Hackathon 1st Place" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Category</label>
+                  <select name="category" class="form-select form-select-modern">
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Research">Research</option>
+                    <option value="Grant">Innovation Grant</option>
+                    <option value="Student Award">Student Award</option>
+                    <option value="Faculty Honor">Faculty Honor</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Award Badge</label>
+                  <input class="form-control form-control-modern" name="badge" placeholder="e.g., First Place Trophy" value="First Place Award">
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Event Date</label>
+                  <input class="form-control form-control-modern" name="date" type="date" value="2025-05-18">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Image Path</label>
+                  <input class="form-control form-control-modern" name="image_url" value="/static/img/nit.jpg">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Achievement Description *</label>
+                <textarea class="form-control form-control-modern" name="description" rows="4" placeholder="Detail the victory, competing institutes, team members, and impact..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2">
+                <i class="bi bi-trophy-fill me-1"></i> Publish to Landing Page
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Current Achievements Grid -->
+        <div class="col-lg-8">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-3">Live Department Achievements on Homepage ({{ achievements|length }})</h4>
+            
+            <div class="row g-3">
+              {% for a in achievements %}
+                <div class="col-md-6">
+                  <div class="achievement-card-dynamic border-secondary">
+                    <div class="achievement-img-wrap" style="height: 140px;">
+                      <img src="{{ a.image_url if a.image_url else url_for('static', filename='img/nit.jpg') }}" onerror="this.src='{{ url_for('static', filename='img/nit.jpg') }}'">
+                      <div class="achievement-badge-floating" style="font-size: 0.7rem;">
+                        {{ a.badge }}
+                      </div>
+                    </div>
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge bg-secondary bg-opacity-40" style="font-size: 0.7rem;">{{ a.category }}</span>
+                        <span class="text-slate-muted small">{{ a.date }}</span>
+                      </div>
+                      <h6 class="fw-bold text-white mb-1">{{ a.title }}</h6>
+                      <p class="text-slate-muted small mb-3 flex-grow-1">{{ a.description[:110] }}...</p>
+                      
+                      <div class="text-end border-top border-secondary border-opacity-30 pt-2">
+                        <a href="{{ url_for('admin_delete_achievement', aid=a.id) }}" class="btn btn-outline-danger btn-sm py-1 px-2.5" onclick="return confirm('Remove achievement from landing page?')">
+                          <i class="bi bi-trash-fill me-1"></i> Delete
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <div class="col-12 text-center text-slate-muted py-4">No achievements on the homepage. Use the form to publish one.</div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PROJECTS MASTER HUB TAB -->
+    <div class="tab-pane fade" id="tab-projects" role="tabpanel">
+      <div class="glass-panel p-4">
+        <h4 class="fw-bold text-white mb-3">Student Project Submissions & Global Approvals ({{ projects|length }})</h4>
+        
+        <div class="table-responsive">
+          <table class="table-modern">
+            <thead>
+              <tr>
+                <th>Title & Domain</th>
+                <th>Author</th>
+                <th>Supervisor</th>
+                <th>Status</th>
+                <th>Links</th>
+                <th>Featured</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in projects %}
+                <tr>
+                  <td>
+                    <div class="fw-bold text-white">{{ p.title }}</div>
+                    <span class="badge bg-primary bg-opacity-20 text-cyan" style="font-size: 0.7rem;">{{ p.category }}</span>
+                  </td>
+                  <td class="small text-slate-muted">
+                    <span class="text-white fw-medium d-block">{{ p.student_name }}</span>
+                    {{ p.student_email }}
+                  </td>
+                  <td class="small text-slate-muted">
+                    {{ p.faculty_name if p.faculty_name else 'Unassigned' }}
+                  </td>
+                  <td>
+                    {% if p.status == 'Approved' %}
+                      <span class="badge-status-approved">Approved</span>
+                    {% elif p.status == 'Needs Revision' %}
+                      <span class="badge-status-review">Revision</span>
+                    {% elif p.status == 'Rejected' %}
+                      <span class="badge-status-rejected">Rejected</span>
+                    {% else %}
+                      <span class="badge-status-pending">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      {% if p.github_url %}<a href="{{ p.github_url }}" target="_blank" class="btn btn-glass btn-sm p-1" title="GitHub"><i class="bi bi-github"></i></a>{% endif %}
+                      {% if p.demo_url %}<a href="{{ p.demo_url }}" target="_blank" class="btn btn-glass btn-sm p-1" title="Demo"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    <a href="{{ url_for('admin_toggle_featured_project', pid=p.id) }}" class="btn btn-sm {% if p.is_featured %}btn-warning text-dark{% else %}btn-glass text-slate-muted{% endif %}" title="Toggle Featured on Landing Page">
+                      <i class="bi bi-star-fill"></i>
+                    </a>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a href="{{ url_for('admin_set_project_status', pid=p.id, status='Approved') }}" class="btn btn-outline-success" title="Approve"><i class="bi bi-check-lg"></i></a>
+                      <a href="{{ url_for('admin_set_project_status', pid=p.id, status='Needs Revision') }}" class="btn btn-outline-warning" title="Request Revision"><i class="bi bi-pencil"></i></a>
+                      <a href="{{ url_for('admin_set_project_status', pid=p.id, status='Rejected') }}" class="btn btn-outline-danger" title="Reject"><i class="bi bi-x-lg"></i></a>
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="7" class="text-center text-slate-muted py-4">No student projects submitted yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. STUDENT ACCOUNTS GOVERNANCE TAB -->
+    <div class="tab-pane fade" id="tab-students" role="tabpanel">
+      <div class="glass-panel p-4">
+        <h4 class="fw-bold text-white mb-3">Enrolled Student Accounts & Approval Sync ({{ students|length }})</h4>
+        
+        <div class="table-responsive">
+          <table class="table-modern">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Class / Year</th>
+                <th>Specialization Track</th>
+                <th>Account Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in students %}
+                <tr>
+                  <td>
+                    <div class="fw-bold text-white">{{ s.name }}</div>
+                    <small class="text-slate-muted">{{ s.email }}</small>
+                  </td>
+                  <td class="text-slate-muted small">{{ s.designation if s.designation else 'Student' }}</td>
+                  <td class="text-cyan small">{{ s.specialization }}</td>
+                  <td>
+                    {% if s.status == 'Approved' %}
+                      <span class="badge-status-approved"><i class="bi bi-check-circle-fill"></i> Approved</span>
+                    {% elif s.status == 'Rejected' %}
+                      <span class="badge-status-rejected"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+                    {% else %}
+                      <span class="badge-status-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a href="{{ url_for('admin_set_student_status', uid=s.id, status='Approved') }}" class="btn btn-outline-success">Approve</a>
+                      <a href="{{ url_for('admin_set_student_status', uid=s.id, status='Rejected') }}" class="btn btn-outline-danger">Reject</a>
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center text-slate-muted py-4">No students registered yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 5. ACTIVITIES & PARTICIPATIONS TAB -->
+    <div class="tab-pane fade" id="tab-activities" role="tabpanel">
+      <div class="row g-4">
+        <!-- Create Activity Form -->
+        <div class="col-lg-4">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-2"><i class="bi bi-calendar-plus text-pink me-2"></i>Schedule Activity</h4>
+            <p class="text-slate-muted small mb-4">Post workshops, hackathons, and guest lectures for students to attend.</p>
+
+            <form method="post" action="{{ url_for('create_activity') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Activity Event Title *</label>
+                <input class="form-control form-control-modern" name="title" placeholder="e.g., Autonomous Edge AI Robotics Workshop" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Event Date *</label>
+                  <input class="form-control form-control-modern" name="date" type="date" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Category</label>
+                  <select name="category" class="form-select form-select-modern">
+                    <option value="Workshop">Workshop</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Bootcamp">Bootcamp</option>
+                    <option value="Seminar">Seminar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Venue / Lab Location</label>
+                <input class="form-control form-control-modern" name="location" value="AI Compute Lab / Auditorium">
+              </div>
+
+              <div>
+                <label class="form-label-modern">Event Description</label>
+                <textarea class="form-control form-control-modern" name="description" rows="3" placeholder="Overview of speakers, topics, and hands-on deliverables..."></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2">
+                <i class="bi bi-calendar-check me-1"></i> Schedule Activity
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Student Activity Participation Proofs -->
+        <div class="col-lg-8">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-3">Student Participation Proofs & Certification Audit</h4>
+            
+            <div class="table-responsive">
+              <table class="table-modern">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Activity</th>
+                    <th>Proof</th>
+                    <th>Notes</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in participations %}
+                    <tr>
+                      <td>
+                        <span class="fw-medium text-white d-block">{{ p.name }}</span>
+                        <small class="text-slate-muted">{{ p.email }}</small>
+                      </td>
+                      <td class="text-slate-muted small">{{ p.title }}</td>
+                      <td>
+                        <a href="{{ p.proof }}" target="_blank" class="btn btn-glass btn-sm">
+                          <i class="bi bi-link-45deg me-1"></i> Proof
+                        </a>
+                      </td>
+                      <td>
+                        <span class="text-slate-muted small italic">{{ p.verifier_notes if p.verifier_notes else '—' }}</span>
+                      </td>
+                      <td>
+                        {% if p.status == 'Approved' %}
+                          <span class="badge-status-approved"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                        {% elif p.status == 'Rejected' %}
+                          <span class="badge-status-rejected"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+                        {% else %}
+                          <span class="badge-status-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <button type="button" class="btn btn-outline-cyan" title="Audit & Add Notes"
+                            onclick="openAdminCertModal({{ p.id }}, '{{ p.name|replace('\'', '\\\'') }}', '{{ p.title|replace('\'', '\\\'') }}', '{{ p.proof|replace('\'', '\\\'') }}', '{{ p.status }}', '{{ (p.verifier_notes or '')|replace('\'', '\\\'')|replace('\n', ' ') }}')">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <a href="{{ url_for('set_participation_status', pid=p.id, status='Approved') }}" class="btn btn-outline-success" title="Direct Approve">
+                            <i class="bi bi-check-lg"></i>
+                          </a>
+                          <a href="{{ url_for('set_participation_status', pid=p.id, status='Rejected') }}" class="btn btn-outline-danger" title="Direct Reject">
+                            <i class="bi bi-x-lg"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="6" class="text-center text-slate-muted py-4">No student participation proofs submitted yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. SUPABASE CLOUD ARCHITECTURE & SYNC TAB -->
+    <div class="tab-pane fade" id="tab-supabase" role="tabpanel">
+      <div class="row g-4">
+        
+        <!-- Cloud Status & Credentials Card -->
+        <div class="col-lg-5">
+          <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon-wrapper" style="width: 52px; height: 52px; font-size: 1.6rem; background: rgba(6, 182, 212, 0.15); color: #22d3ee; border-color: rgba(6, 182, 212, 0.3);">
+                  <i class="bi bi-cloud-arrow-up-fill"></i>
+                </div>
+                <div>
+                  <h4 class="fw-bold text-white mb-0 brand-font">Supabase Cloud Engine</h4>
+                  <div class="text-slate-muted small">PostgreSQL 15+ & Row-Level Security</div>
+                </div>
+              </div>
+
+              <p class="text-slate-muted small mb-4">
+                The AI & ICT Department Portal features a dual-engine architecture: local ultra-fast SQLite for rapid offline development, paired with a cloud-native <strong>Supabase PostgreSQL</strong> synchronization layer.
+              </p>
+
+              <!-- Connection Status Pill Card -->
+              <div class="p-3.5 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-40 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-slate-muted small fw-medium">Cloud Connection Status:</span>
+                  <span id="supabaseStatusBadge" class="badge bg-secondary text-white px-3 py-1 rounded-pill">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Probing...
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-slate-muted small">Project Endpoint:</span>
+                  <code id="supabaseEndpointDisplay" class="text-cyan small">Checking .env...</code>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-slate-muted small">Python Driver:</span>
+                  <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30">supabase-py v2.31 Active</span>
+                </div>
+              </div>
+
+              <!-- Message from Cloud Probe -->
+              <div id="supabaseStatusMessage" class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-20 small text-slate-muted mb-3">
+                Probing Supabase Cloud connection status...
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-cyan" onclick="checkSupabaseStatus()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Re-test Cloud Connection
+              </button>
+              <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#supabaseSqlModal" onclick="loadSupabaseSql()">
+                <i class="bi bi-file-earmark-code text-indigo me-1"></i> View & Copy Supabase DDL SQL
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-Click Sync & Database Breakdown Card -->
+        <div class="col-lg-7">
+          <div class="glass-panel p-4 h-100">
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-arrow-repeat text-cyan me-2"></i>Live Cloud Database Synchronization</h4>
+            <p class="text-slate-muted small mb-4">
+              Synchronize all local SQLite tables (users, projects, achievements, messages, activities) directly to your live Supabase Cloud project.
+            </p>
+
+            <div id="syncResultAlert" class="d-none alert mb-3"></div>
+
+            <div class="table-responsive mb-4">
+              <table class="table-modern">
+                <thead>
+                  <tr>
+                    <th>Relational Entity Table</th>
+                    <th>Local Records</th>
+                    <th>Supabase Table Name</th>
+                    <th>RLS Protection</th>
+                  </tr>
+                </thead>
+                <tbody id="supabaseTableRecordsBody">
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-people text-indigo me-2"></i>Users & Roles</td>
+                    <td class="text-cyan fw-bold" id="recCountUsers">{{ stats.total_students + stats.total_faculty + 1 }}</td>
+                    <td><code>public.users</code></td>
+                    <td><span class="badge bg-success bg-opacity-20 text-success">Enabled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-code-square text-cyan me-2"></i>Project Submissions</td>
+                    <td class="text-cyan fw-bold" id="recCountProjects">{{ stats.total_projects }}</td>
+                    <td><code>public.projects</code></td>
+                    <td><span class="badge bg-success bg-opacity-20 text-success">Enabled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-trophy text-warning me-2"></i>Department Achievements</td>
+                    <td class="text-cyan fw-bold" id="recCountAchievements">{{ stats.achievements_count }}</td>
+                    <td><code>public.achievements</code></td>
+                    <td><span class="badge bg-success bg-opacity-20 text-success">Enabled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-calendar2-event text-pink me-2"></i>Department Activities</td>
+                    <td class="text-cyan fw-bold" id="recCountActivities">{{ activities|length }}</td>
+                    <td><code>public.activities</code></td>
+                    <td><span class="badge bg-success bg-opacity-20 text-success">Enabled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-chat-left-dots text-amber me-2"></i>Faculty Messages</td>
+                    <td class="text-cyan fw-bold" id="recCountMessages">{{ all_messages|length }}</td>
+                    <td><code>public.messages</code></td>
+                    <td><span class="badge bg-success bg-opacity-20 text-success">Enabled</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Sync Button -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3.5 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30">
+              <div>
+                <div class="fw-bold text-white small">Initiate Full Cloud Synchronization</div>
+                <div class="text-slate-muted text-xs">Upserts existing records without duplicate collisions.</div>
+              </div>
+              <button id="btnSyncSupabase" class="btn btn-primary-glow px-4" onclick="triggerSupabaseSync()">
+                <i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Sync SQLite to Supabase Cloud
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+    <!-- INNOVATION CLUB SHOWCASES TAB -->
+    <div class="tab-pane fade" id="tab-innovation" role="tabpanel">
+      <div class="row g-4">
+        <!-- Add Showcase Form -->
+        <div class="col-lg-4">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-rocket-takeoff-fill text-pink me-2"></i>New Innovation Prototype</h4>
+            <p class="text-slate-muted small mb-4">Add flagship club research prototypes and engineering showcases.</p>
+
+            <form method="post" action="{{ url_for('admin_create_innovation_showcase') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Prototype Title *</label>
+                <input class="form-control form-control-modern" name="title" placeholder="e.g. Autonomous Vision Drone v3" required>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Track / Category *</label>
+                <select name="category" class="form-select form-select-modern" required>
+                  <option value="Autonomous Robotics & Drones">Autonomous Robotics &amp; Drones</option>
+                  <option value="Generative AI & LLMs">Generative AI &amp; LLMs</option>
+                  <option value="Edge AI & IoT Hardware">Edge AI &amp; IoT Hardware</option>
+                  <option value="Cyber Systems & Quantum">Cyber Systems &amp; Quantum</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Key Innovation & Abstract *</label>
+                <textarea class="form-control form-control-modern" name="description" rows="3" placeholder="Core architecture and novelty..." required></textarea>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Tech Stack (comma-separated)</label>
+                <input class="form-control form-control-modern" name="tech_stack" placeholder="Three.js, PyTorch, ROS2, Jetson">
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Demo / Sim URL</label>
+                  <input class="form-control form-control-modern" name="demo_url" placeholder="https://...">
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Architecture Image</label>
+                  <input class="form-control form-control-modern" name="image_url" placeholder="/static/img/..." value="/static/img/mehraj.png">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Key Performance Metric</label>
+                <input class="form-control form-control-modern" name="metric" placeholder="e.g. 15ms Latency &bull; 99.4% Accuracy">
+              </div>
+
+              <div class="form-check form-switch mt-1">
+                <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="switchFeatured" checked>
+                <label class="form-check-label text-white small" for="switchFeatured">Spotlight in Innovation Club</label>
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2" style="background: var(--grad-accent);">
+                <i class="bi bi-plus-circle me-1"></i> Publish Innovation Showcase
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Showcases Directory -->
+        <div class="col-lg-8">
+          <div class="glass-panel p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="fw-bold text-white mb-0">Active Innovation Club Prototypes ({{ innovation_showcases|length }})</h4>
+              <a href="{{ url_for('innovation_club') }}" target="_blank" class="btn btn-outline-cyan btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View Live Innovation Club
+              </a>
+            </div>
+
+            <div class="row g-3">
+              {% for sc in innovation_showcases %}
+                <div class="col-md-6">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-30 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-pink bg-opacity-20 text-pink border border-pink border-opacity-30" style="font-size: 0.7rem;">{{ sc.category }}</span>
+                        {% if sc.is_featured %}
+                          <span class="badge bg-warning bg-opacity-20 text-warning" style="font-size: 0.65rem;"><i class="bi bi-star-fill me-1"></i>Featured</span>
+                        {% endif %}
+                      </div>
+                      <h6 class="fw-bold text-white mb-1">{{ sc.title }}</h6>
+                      <p class="text-slate-muted small mb-2 line-clamp-2" style="font-size: 0.78rem;">{{ sc.description }}</p>
+                      
+                      {% if sc.metric %}
+                        <div class="text-cyan small fw-semibold mb-2" style="font-size: 0.75rem;"><i class="bi bi-speedometer2 me-1"></i>{{ sc.metric }}</div>
+                      {% endif %}
+
+                      {% if sc.tech_stack %}
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                          {% for t in sc.tech_stack.split(',') %}
+                            <span class="badge bg-secondary bg-opacity-30 text-slate-muted text-xs">{{ t.strip() }}</span>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-30 mt-2">
+                      <span class="text-slate-muted text-xs">{{ sc.created_at[:10] if sc.created_at else '' }}</span>
+                      <div class="d-flex gap-1">
+                        {% if sc.demo_url %}
+                          <a href="{{ sc.demo_url }}" target="_blank" class="btn btn-outline-cyan btn-xs py-0.5 px-2 text-xs">Demo</a>
+                        {% endif %}
+                        <a href="{{ url_for('admin_delete_innovation_showcase', sc_id=sc.id) }}" class="btn btn-outline-danger btn-xs py-0.5 px-2 text-xs" onclick="return confirm('Remove prototype {{ sc.title }}?')">
+                          <i class="bi bi-trash"></i>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <div class="col-12 text-center text-slate-muted py-5">
+                  <i class="bi bi-rocket-takeoff fs-2 text-pink opacity-50 d-block mb-2"></i>
+                  No innovation club showcases added yet.
+                </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================================
+     ADMIN EDIT FACULTY MODAL
+     ======================================================================== -->
+<div class="modal fade" id="editFacultyModal" tabindex="-1" aria-labelledby="editFacultyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(28px);">
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border-color: rgba(6, 182, 212, 0.4);">
+            <i class="bi bi-pencil-square"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="editFacultyModalLabel">Update Faculty Record</h5>
+            <div class="text-slate-muted text-xs">Modify credentials, academic qualification, research domains &amp; office details</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('admin_update_faculty') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="id" id="editFacultyId">
+          <input type="hidden" name="faculty_id" id="editFacultyFid">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-modern">Faculty Full Name *</label>
+              <input class="form-control form-control-modern" id="editFacultyName" name="name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Official Email *</label>
+              <input class="form-control form-control-modern" id="editFacultyEmail" name="email" type="email" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Reset Password <span class="text-slate-muted text-xs">(Leave empty to keep current)</span></label>
+              <input class="form-control form-control-modern" name="password" type="password" placeholder="New password (optional)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Designation</label>
+              <input class="form-control form-control-modern" id="editFacultyDesignation" name="designation">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Academic Qualification</label>
+              <input class="form-control form-control-modern" id="editFacultyQualification" name="qualification">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Years of Experience</label>
+              <input class="form-control form-control-modern" id="editFacultyExperience" name="experience">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Phone Number</label>
+              <input class="form-control form-control-modern" id="editFacultyPhone" name="phone">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Office / Lab Room</label>
+              <input class="form-control form-control-modern" id="editFacultyOffice" name="office_room">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Avatar Image Path/URL</label>
+              <input class="form-control form-control-modern" id="editFacultyAvatar" name="avatar">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Research / Specialization Area</label>
+              <input class="form-control form-control-modern" id="editFacultySpecialization" name="specialization">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">LinkedIn URL</label>
+              <input class="form-control form-control-modern" id="editFacultyLinkedIn" name="linkedin_url">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">GitHub URL</label>
+              <input class="form-control form-control-modern" id="editFacultyGitHub" name="github_url">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label-modern">Faculty Bio &amp; Research Scope</label>
+              <textarea class="form-control form-control-modern" id="editFacultyBio" name="bio" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow">
+            <i class="bi bi-check-circle-fill me-1"></i> Save Faculty Updates
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     ADMIN QUICK RESET FACULTY PASSWORD MODAL
+     ======================================================================== -->
+<div class="modal fade" id="resetFacultyPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-warning shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(28px);">
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(234, 179, 8, 0.2); color: #facc15; border-color: rgba(234, 179, 8, 0.4);">
+            <i class="bi bi-key-fill"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="resetPasswordModalLabel">Reset Faculty Password</h5>
+            <div class="text-slate-muted text-xs">Directly update the login credentials for this faculty member</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('admin_reset_faculty_password') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="faculty_id" id="resetPassFacultyId">
+          <input type="hidden" name="id" id="resetPassFacultyIdAlt">
+
+          <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 mb-3">
+            <div class="text-slate-muted text-xs">Faculty Member:</div>
+            <div class="fw-bold text-white fs-6" id="resetPassFacultyName">Faculty Name</div>
+            <div class="text-slate-muted text-xs mt-1">Official Email:</div>
+            <div class="text-cyan small fw-semibold" id="resetPassFacultyEmail">faculty@dept.ai</div>
+          </div>
+
+          <div>
+            <label class="form-label-modern"><i class="bi bi-shield-lock text-warning me-1"></i> New Password for Login *</label>
+            <input class="form-control form-control-modern" name="new_password" type="text" placeholder="Enter new password (e.g. faculty123)" required>
+            <span class="text-slate-muted text-xs mt-1 d-block">This faculty member can immediately log in with this new password.</span>
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow" style="background: var(--grad-accent);">
+            <i class="bi bi-check-circle-fill me-1"></i> Save New Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     ADMIN CERTIFICATE PROOF VERIFICATION MODAL
+     ======================================================================== -->
+<div class="modal fade" id="adminCertVerifyModal" tabindex="-1" aria-labelledby="adminCertModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+            <i class="bi bi-patch-check-fill"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="adminCertModalLabel">Admin Participation Audit</h5>
+            <div class="text-slate-muted text-xs">Verify Student Activity Certification & Record Audit Notes</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('verify_participation') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="participation_id" id="modalAdminCertPartId">
+
+          <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30 mb-3">
+            <div class="text-slate-muted text-xs">Student:</div>
+            <div class="fw-bold text-white" id="modalAdminCertStudentName">Name</div>
+            <div class="text-slate-muted text-xs mt-2">Activity Title:</div>
+            <div class="fw-medium text-cyan" id="modalAdminCertActivityTitle">Title</div>
+            <div class="mt-3">
+              <a id="modalAdminCertProofLink" href="#" target="_blank" class="btn btn-outline-cyan btn-sm w-100">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Inspect Certificate Document / Proof
+              </a>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-modern">Verification Status *</label>
+            <select name="status" id="modalAdminCertStatus" class="form-select form-select-modern" required>
+              <option value="Approved">Verified (Approve Certificate)</option>
+              <option value="Rejected">Rejected (Invalid Proof)</option>
+              <option value="Pending">Mark as Pending</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label-modern">Official Administrator Audit Notes</label>
+            <input name="verifier_notes" id="modalAdminCertNotes" class="form-control form-control-modern" placeholder="e.g. Certificate verified against department event registry...">
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary-glow px-4">
+            <i class="bi bi-check2-circle me-1"></i> Save Verification Audit
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     SUPABASE SCHEMA SQL DDL MODAL
+     ======================================================================== -->
+<div class="modal fade" id="supabaseSqlModal" tabindex="-1" aria-labelledby="sqlModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(24px);">
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">
+            <i class="bi bi-filetype-sql"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="sqlModalLabel">Supabase PostgreSQL Schema & RLS Policies</h5>
+            <div class="text-slate-muted text-xs">Ready to paste into Supabase Cloud SQL Editor</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-slate-muted small">DDL schema file: <code>supabase_schema.sql</code></span>
+          <button class="btn btn-outline-cyan btn-sm" onclick="copySupabaseSql()">
+            <i class="bi bi-clipboard me-1"></i> <span id="copyBtnText">Copy Entire SQL</span>
+          </button>
+        </div>
+        <pre class="p-3 rounded-3 bg-dark text-cyan small border border-secondary border-opacity-40" style="max-height: 480px; overflow-y: auto; font-family: monospace;" id="sqlModalPre">Loading schema SQL...</pre>
+      </div>
+
+      <div class="modal-footer border-secondary border-opacity-30 p-3 px-4 d-flex justify-content-between">
+        <span class="text-slate-muted text-xs">Run this SQL in the Supabase Dashboard SQL Editor to set up cloud tables and security policies.</span>
+        <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Open Admin Certificate Verification Modal
+  function openAdminCertModal(id, studentName, activityTitle, proofUrl, status, verifierNotes) {
+    document.getElementById('modalAdminCertPartId').value = id;
+    document.getElementById('modalAdminCertStudentName').textContent = studentName;
+    document.getElementById('modalAdminCertActivityTitle').textContent = activityTitle;
+    document.getElementById('modalAdminCertProofLink').href = proofUrl;
+    document.getElementById('modalAdminCertStatus').value = status || 'Approved';
+    document.getElementById('modalAdminCertNotes').value = verifierNotes || '';
+
+    const certModal = new bootstrap.Modal(document.getElementById('adminCertVerifyModal'));
+    certModal.show();
+  }
+
+  // Supabase Cloud Probing & Status
+  function checkSupabaseStatus() {
+    const badge = document.getElementById('supabaseStatusBadge');
+    const msg = document.getElementById('supabaseStatusMessage');
+    const endpoint = document.getElementById('supabaseEndpointDisplay');
+
+    badge.className = 'badge bg-secondary text-white px-3 py-1 rounded-pill';
+    badge.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Probing...';
+
+    fetch('/admin/supabase/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.is_connected) {
+          badge.className = 'badge bg-success text-white px-3 py-1 rounded-pill';
+          badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Connected';
+          endpoint.textContent = data.masked_url || 'Connected';
+          msg.className = 'p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-30 small text-success mb-3';
+          msg.innerHTML = `<strong>Live Connected:</strong> ${data.connection_message}`;
+        } else if (data.is_configured) {
+          badge.className = 'badge bg-warning text-dark px-3 py-1 rounded-pill';
+          badge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Configured (Offline)';
+          endpoint.textContent = data.masked_url || 'Configured in .env';
+          msg.className = 'p-3 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-30 small text-warning mb-3';
+          msg.innerHTML = `<strong>Status:</strong> ${data.connection_message}`;
+        } else {
+          badge.className = 'badge bg-info bg-opacity-20 text-cyan border border-info border-opacity-30 px-3 py-1 rounded-pill';
+          badge.innerHTML = '<i class="bi bi-hdd-network me-1"></i> Local SQLite Ready';
+          endpoint.textContent = 'Awaiting SUPABASE_URL in .env';
+          msg.className = 'p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-20 small text-slate-muted mb-3';
+          msg.innerHTML = `<strong>Local SQLite Active:</strong> All features work out of the box with zero setup. To connect to Supabase Cloud, add <code>SUPABASE_URL</code> and <code>SUPABASE_KEY</code> to your <code>.env</code> file.`;
+        }
+
+        if (data.local_records) {
+          if (document.getElementById('recCountUsers')) document.getElementById('recCountUsers').textContent = data.local_records.users;
+          if (document.getElementById('recCountProjects')) document.getElementById('recCountProjects').textContent = data.local_records.projects;
+          if (document.getElementById('recCountAchievements')) document.getElementById('recCountAchievements').textContent = data.local_records.achievements;
+          if (document.getElementById('recCountActivities')) document.getElementById('recCountActivities').textContent = data.local_records.activities;
+          if (document.getElementById('recCountMessages')) document.getElementById('recCountMessages').textContent = data.local_records.messages;
+        }
+      })
+      .catch(() => {
+        badge.className = 'badge bg-danger text-white px-3 py-1 rounded-pill';
+        badge.textContent = 'Connection Error';
+        msg.textContent = 'Failed to reach backend status endpoint.';
+      });
+  }
+
+  // Trigger Supabase Cloud Sync
+  function triggerSupabaseSync() {
+    const btn = document.getElementById('btnSyncSupabase');
+    const alertBox = document.getElementById('syncResultAlert');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5"></span> Synchronizing with Cloud...';
+    alertBox.className = 'd-none';
+
+    fetch('/admin/supabase/sync', { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Sync SQLite to Supabase Cloud';
+        alertBox.classList.remove('d-none');
+
+        if (data.success) {
+          alertBox.className = 'alert alert-success d-flex align-items-center gap-2 mb-3';
+          alertBox.innerHTML = `<i class="bi bi-check-circle-fill fs-5"></i> <div><strong>Success!</strong> ${data.message} (${JSON.stringify(data.synced_counts)})</div>`;
+        } else {
+          alertBox.className = 'alert alert-warning d-flex align-items-center gap-2 mb-3';
+          alertBox.innerHTML = `<i class="bi bi-info-circle-fill fs-5"></i> <div><strong>Notice:</strong> ${data.message}</div>`;
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Sync SQLite to Supabase Cloud';
+        alertBox.classList.remove('d-none');
+        alertBox.className = 'alert alert-danger d-flex align-items-center gap-2 mb-3';
+        alertBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill fs-5"></i> <div><strong>Sync Failed:</strong> ${err.message || 'Network error occurred.'}</div>`;
+      });
+  }
+
+  // Fetch Supabase SQL DDL for modal
+  function loadSupabaseSql() {
+    const pre = document.getElementById('sqlModalPre');
+    fetch('/admin/supabase/schema_sql')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          pre.textContent = data.sql;
+        } else {
+          pre.textContent = 'Error: ' + data.message;
+        }
+      })
+      .catch(() => {
+        pre.textContent = 'Failed to load supabase_schema.sql.';
+      });
+  }
+
+  // Copy Supabase SQL to Clipboard
+  function copySupabaseSql() {
+    const text = document.getElementById('sqlModalPre').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtnText');
+      btn.textContent = 'Copied to Clipboard!';
+      setTimeout(() => { btn.textContent = 'Copy Entire SQL'; }, 2500);
+    });
+  }
+
+  // Open Edit Faculty Modal & Populate Data
+  function openFacultyEditModal(id, name, email, designation, specialization, phone, avatar, qualification, experience, office_room, linkedin, github) {
+    document.getElementById('editFacultyId').value = id || '';
+    if (document.getElementById('editFacultyFid')) {
+      document.getElementById('editFacultyFid').value = id || '';
+    }
+    document.getElementById('editFacultyName').value = name || '';
+    document.getElementById('editFacultyEmail').value = email || '';
+    document.getElementById('editFacultyDesignation').value = designation || '';
+    document.getElementById('editFacultySpecialization').value = specialization || '';
+    document.getElementById('editFacultyPhone').value = phone || '';
+    document.getElementById('editFacultyAvatar').value = avatar || '';
+    document.getElementById('editFacultyQualification').value = qualification || '';
+    document.getElementById('editFacultyExperience').value = experience || '';
+    document.getElementById('editFacultyOffice').value = office_room || '';
+    document.getElementById('editFacultyLinkedIn').value = linkedin || '';
+    document.getElementById('editFacultyGitHub').value = github || '';
+    
+    const modalEl = document.getElementById('editFacultyModal');
+    if (modalEl) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  // Open Quick Reset Password Modal for Faculty
+  function openResetPasswordModal(id, name, email) {
+    document.getElementById('resetPassFacultyId').value = id || '';
+    document.getElementById('resetPassFacultyIdAlt').value = id || '';
+    document.getElementById('resetPassFacultyName').textContent = name || '';
+    document.getElementById('resetPassFacultyEmail').textContent = email || '';
+    const modal = new bootstrap.Modal(document.getElementById('resetFacultyPasswordModal'));
+    modal.show();
+  }
+
+  // Auto-probe Supabase status when tab is shown
+  document.addEventListener('DOMContentLoaded', function() {
+    const supabaseTabBtn = document.getElementById('pills-supabase-tab');
+    if (supabaseTabBtn) {
+      supabaseTabBtn.addEventListener('shown.bs.tab', function() {
+        checkSupabaseStatus();
+      });
+    }
+  });
+</script>
+{% endblock %}

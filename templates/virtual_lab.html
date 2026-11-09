@@ -1,0 +1,3137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} — AI & ICT Virtual Lab Studio{% endblock %}
+
+{% block head %}
+<!-- CodeMirror 5 Syntax Engine & Dark Theme -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.css"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+
+<style>
+  /* Virtual Lab IDE Ultra-Modern Workspace Theme */
+  :root {
+    --ide-bg: #0b0f19;
+    --ide-surface: #111827;
+    --ide-surface-2: #1e293b;
+    --ide-border: rgba(148, 163, 184, 0.15);
+    --ide-accent: #06b6d4;
+    --ide-accent-glow: rgba(6, 182, 212, 0.3);
+    --ide-text-dim: #94a3b8;
+  }
+
+  /* Real Desktop-Grade IDE Viewport: Zero window scroll & hide site footer on Virtual Lab */
+  footer.peak-footer {
+    display: none !important;
+  }
+  html, body {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+  body {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  main.flex-grow-1 {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Compact flash alert inside Virtual Lab if present */
+  .container.mt-3:has(.alert) {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  .container.mt-3 .alert {
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  #floatingAiToggleBtn {
+    transform: scale(0.82);
+    bottom: 10px !important;
+    right: 10px !important;
+    opacity: 0.85;
+  }
+  #floatingAiToggleBtn:hover {
+    opacity: 1;
+  }
+
+  .virtual-lab-wrapper {
+    background: var(--ide-bg);
+    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex;
+    flex-direction: column;
+    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  /* IDE Top Toolbar */
+  .ide-topbar {
+    background: rgba(17, 24, 39, 0.98);
+    border-bottom: 1px solid var(--ide-border);
+    padding: 0.35rem 0.85rem;
+    backdrop-filter: blur(16px);
+    flex-shrink: 0;
+    z-index: 40;
+  }
+
+  .lang-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+  }
+  .lang-badge-python { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+  .lang-badge-javascript { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+  .lang-badge-block { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+
+  /* Main IDE Body */
+  .ide-workspace {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+  }
+
+  /* Left Explorer Sidebar */
+  .ide-sidebar {
+    width: 270px;
+    background: #0d121f;
+    border-right: 1px solid var(--ide-border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.2s ease;
+  }
+
+  .sidebar-header {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ide-text-dim);
+    font-weight: 700;
+    border-bottom: 1px solid var(--ide-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .file-tree-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0.35rem;
+  }
+
+  .tree-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin-bottom: 1px;
+  }
+  .tree-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+  }
+  .tree-item.active {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+    font-weight: 600;
+    border-left: 2px solid #06b6d4;
+  }
+  .tree-item .item-actions {
+    display: none;
+    gap: 0.25rem;
+  }
+  .tree-item:hover .item-actions {
+    display: flex;
+  }
+
+  .tree-folder-title {
+    font-weight: 600;
+    color: #cbd5e1;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin-bottom: 2px;
+  }
+  .tree-folder-title:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+  }
+  .tree-folder-title.selected-folder {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-left: 2px solid #f59e0b;
+    font-weight: 700;
+  }
+  .tree-folder-title .folder-chevron {
+    font-size: 0.72rem;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .tree-folder-title .folder-chevron.collapsed {
+    transform: rotate(-90deg);
+  }
+  .tree-folder-title .item-actions {
+    display: none;
+    gap: 0.3rem;
+    margin-left: auto;
+  }
+  .tree-folder-title:hover .item-actions,
+  .tree-folder-title.selected-folder .item-actions {
+    display: flex;
+  }
+  .tree-folder-children.collapsed {
+    display: none !important;
+  }
+
+  /* Center Workspace & Editor */
+  .ide-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #090d16;
+  }
+
+  /* Tab Bar */
+  .ide-tabbar {
+    background: #0c111d;
+    border-bottom: 1px solid var(--ide-border);
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-height: 38px;
+  }
+  .ide-tabbar::-webkit-scrollbar { display: none; }
+
+  .ide-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1rem;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    border-right: 1px solid var(--ide-border);
+    cursor: pointer;
+    white-space: nowrap;
+    border-top: 2px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .ide-tab:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: #e2e8f0;
+  }
+  .ide-tab.active {
+    background: #090d16;
+    color: #38bdf8;
+    font-weight: 600;
+    border-top: 2px solid #06b6d4;
+  }
+  .ide-tab .tab-close {
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 0.7rem;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+  }
+  .ide-tab .tab-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Code Editor Container */
+  #textEditorContainer {
+    flex: 1;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .editor-wrapper {
+    flex: 1;
+    min-height: 80px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .CodeMirror {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100% !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    background: #090d16 !important;
+  }
+  .CodeMirror-gutters {
+    background: #0c111d !important;
+    border-right: 1px solid var(--ide-border) !important;
+  }
+
+  /* Editor Footer Status Bar */
+  .ide-statusbar {
+    background: #0c111d;
+    border-top: 1px solid var(--ide-border);
+    padding: 0.2rem 0.75rem;
+    font-size: 0.72rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    min-height: 24px;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Bottom Console & Preview Panel */
+  .ide-bottom-panel {
+    height: 210px;
+    min-height: 140px;
+    max-height: 55vh;
+    background: #080c14;
+    border-top: 1px solid var(--ide-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    flex-shrink: 0;
+    transition: height 0.2s ease;
+  }
+
+  .bottom-panel-header {
+    background: #0f1523;
+    border-bottom: 1px solid var(--ide-border);
+    padding: 0.25rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .bottom-nav-tabs .nav-link {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+  }
+  .bottom-nav-tabs .nav-link.active {
+    color: #38bdf8;
+    border-bottom: 2px solid #38bdf8;
+    background: transparent;
+    font-weight: 600;
+  }
+
+  .terminal-box {
+    flex: 1;
+    background: #03060d;
+    padding: 0.75rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: #e2e8f0;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .terminal-prompt { color: #34d399; font-weight: 600; }
+  .terminal-stdout { color: #f1f5f9; }
+  .terminal-stderr { color: #f87171; }
+  .terminal-system { color: #38bdf8; }
+
+  /* Scratch / Block-Based Coding Studio */
+  .block-studio-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .block-palette {
+    width: 250px;
+    background: #0f1626;
+    border-right: 1px solid var(--ide-border);
+    overflow-y: auto;
+    padding: 0.75rem;
+  }
+
+  .block-category-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin: 0.75rem 0 0.4rem;
+  }
+
+  .block-snippet-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    cursor: grab;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .block-snippet-btn:hover {
+    transform: translateX(3px);
+  }
+
+  /* Block Colors inspired by Scratch / Modern Blockly */
+  .block-events { background: #d97706; color: #ffffff; border-color: #b45309; }
+  .block-actions { background: #2563eb; color: #ffffff; border-color: #1d4ed8; }
+  .block-loops { background: #059669; color: #ffffff; border-color: #047857; }
+  .block-math { background: #7c3aed; color: #ffffff; border-color: #6d28d9; }
+  .block-sensors { background: #0891b2; color: #ffffff; border-color: #0e7490; }
+  .block-ai { background: #e11d48; color: #ffffff; border-color: #be123c; }
+
+  .block-canvas {
+    flex: 1;
+    background: #080c14;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .active-block-card {
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 6px solid rgba(255,255,255,0.4);
+    transition: all 0.2s ease;
+  }
+  .active-block-card:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  }
+  .active-block-card input, .active-block-card select {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    margin: 0 0.3rem;
+  }
+
+  /* Live Web Iframe Container */
+  .preview-iframe-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    border: none;
+  }
+
+  /* Custom Action Buttons */
+  .btn-run-glow {
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    border: 1px solid #38bdf8;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    transition: all 0.2s ease;
+  }
+  .btn-run-glow:hover {
+    background: linear-gradient(135deg, #0369a1, #0891b2);
+    box-shadow: 0 0 22px rgba(6, 182, 212, 0.65);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .btn-share-teacher {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border: 1px solid #a855f7;
+    color: #ffffff;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .btn-share-teacher:hover {
+    background: linear-gradient(135deg, #4338ca, #6d28d9);
+    box-shadow: 0 0 18px rgba(168, 85, 247, 0.5);
+    color: #ffffff;
+  }
+
+  /* Modern Empty Folder Explorer Card */
+  .tree-empty-folder-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px dashed rgba(56, 189, 248, 0.28);
+    border-radius: 8px;
+    padding: 0.5rem 0.6rem;
+    margin: 0.35rem 0.2rem 0.35rem 0.1rem;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    user-select: none;
+  }
+  .tree-empty-folder-card:hover {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(6, 182, 212, 0.6);
+    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+  }
+  .tree-empty-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+  }
+  .tree-empty-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    letter-spacing: 0.01em;
+  }
+  .tree-empty-cta-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.34rem 0.5rem;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.32);
+    border-radius: 6px;
+    color: #22d3ee;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+  .tree-empty-folder-card:hover .tree-empty-cta-pill {
+    background: #06b6d4;
+    color: #040812;
+    border-color: #06b6d4;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+  }
+  .tree-empty-folder-card:hover .tree-empty-cta-pill .bi-plus-circle-fill {
+    color: #040812 !important;
+  }
+  .tree-empty-subactions {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .btn-empty-subfolder-link {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 0.68rem;
+    color: #f59e0b;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .btn-empty-subfolder-link:hover {
+    color: #fbbf24;
+    text-decoration: underline;
+    transform: translateX(1px);
+  }
+
+  /* Enhanced Bootstrap Modal Animations across Virtual Lab */
+  .modal.fade .modal-dialog {
+    transform: scale(0.92) translateY(-15px);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  }
+  .modal.show .modal-dialog {
+    transform: scale(1) translateY(0);
+  }
+
+  /* ========================================================================
+     STUDIO CUSTOM ANIMATED DIALOG SYSTEM
+     ======================================================================== */
+  .studio-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+  .studio-dialog-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .studio-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 9, 18, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .studio-dialog-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    background: linear-gradient(180deg, #131b2e 0%, #0c1220 100%);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 18px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(6, 182, 212, 0.15);
+    overflow: hidden;
+    transform: scale(0.88) translateY(16px);
+    opacity: 0;
+    transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.22s ease;
+  }
+  .studio-dialog-overlay.active .studio-dialog-card {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  .studio-dialog-card.closing {
+    transform: scale(0.92) translateY(10px);
+    opacity: 0;
+    transition: transform 0.18s ease, opacity 0.15s ease;
+  }
+
+  /* Glowing Top Strip */
+  .studio-dialog-glow {
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(90deg, #ef4444, #f43f5e, #fb7185);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .studio-dialog-glow.cyan-glow {
+    background: linear-gradient(90deg, #06b6d4, #3b82f6, #6366f1);
+    box-shadow: 0 0 16px rgba(6, 182, 212, 0.6);
+  }
+  .studio-dialog-glow.amber-glow {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24, #f97316);
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+  }
+
+  .studio-dialog-inner {
+    padding: 1.5rem 1.5rem 1.25rem;
+    display: flex;
+    gap: 1.15rem;
+    align-items: flex-start;
+  }
+
+  /* Icon Wrapper with Ripple Pulse */
+  .studio-dialog-icon-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+  }
+  .studio-dialog-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+  }
+  .studio-dialog-icon-circle.icon-cyan {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.35);
+    color: #22d3ee;
+  }
+  .studio-dialog-icon-circle.icon-amber {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+  }
+  .studio-dialog-icon-ripple {
+    position: absolute;
+    inset: -4px;
+    border-radius: 18px;
+    background: rgba(239, 68, 68, 0.25);
+    z-index: 1;
+    animation: ripplePulse 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  }
+  .studio-dialog-icon-ripple.ripple-cyan {
+    background: rgba(6, 182, 212, 0.25);
+  }
+  .studio-dialog-icon-ripple.ripple-amber {
+    background: rgba(245, 158, 11, 0.25);
+  }
+  @keyframes ripplePulse {
+    0% {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    65% {
+      transform: scale(1.35);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1.35);
+      opacity: 0;
+    }
+  }
+
+  .studio-dialog-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .studio-dialog-category-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+  .studio-dialog-close-x {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.85rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .studio-dialog-close-x:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .studio-dialog-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+  }
+  .studio-dialog-message {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.45;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Item Chip */
+  .studio-dialog-item-chip {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .studio-dialog-item-name {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  .studio-dialog-item-type {
+    font-size: 0.66rem;
+  }
+
+  /* Warning Callout */
+  .studio-dialog-callout {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    color: #fca5a5;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  .studio-dialog-callout.callout-cyan {
+    background: rgba(6, 182, 212, 0.1);
+    border-color: rgba(6, 182, 212, 0.25);
+    color: #67e8f9;
+  }
+
+  /* Footer Buttons */
+  .studio-dialog-footer {
+    background: rgba(8, 12, 22, 0.95);
+    border-top: 1px solid rgba(148, 163, 184, 0.15);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+  .btn-dialog-ghost {
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    transition: all 0.18s ease;
+  }
+  .btn-dialog-ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+  }
+  .btn-dialog-action {
+    border: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.48rem 1.25rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+  }
+  .btn-action-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+    color: #ffffff;
+  }
+  .btn-action-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 6px 22px rgba(239, 68, 68, 0.65);
+    transform: translateY(-1.5px);
+    color: #ffffff;
+  }
+  .btn-action-cyan {
+    background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.45);
+    color: #ffffff;
+  }
+  .btn-action-cyan:hover {
+    background: linear-gradient(135deg, #0891b2 0%, #0369a1 100%);
+    box-shadow: 0 6px 22px rgba(6, 182, 212, 0.65);
+    transform: translateY(-1.5px);
+    color: #ffffff;
+  }
+  .btn-dialog-action:active {
+    transform: translateY(0);
+  }
+
+  /* Studio Toast Container */
+  .studio-toast-container {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 11000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+    max-width: 360px;
+  }
+  .studio-toast {
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+    padding: 0.65rem 0.95rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #ffffff;
+    font-size: 0.8rem;
+    pointer-events: auto;
+    animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.2s ease;
+  }
+  .studio-toast.toast-error {
+    border-left: 3px solid #ef4444;
+  }
+  .studio-toast.toast-success {
+    border-left: 3px solid #10b981;
+  }
+  .studio-toast.toast-info {
+    border-left: 3px solid #06b6d4;
+  }
+  @keyframes toastSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="virtual-lab-wrapper">
+
+  <!-- ========================================================================
+       1. TOP IDE TOOLBAR
+       ======================================================================== -->
+  <div class="ide-topbar">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      
+      <!-- Left: Brand, Project Switcher & Language -->
+      <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('virtual_lab') }}" class="text-decoration-none d-flex align-items-center gap-2">
+          <div class="stat-icon-wrapper" style="width: 34px; height: 34px; font-size: 1.1rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border-color: rgba(6, 182, 212, 0.4);">
+            <i class="bi bi-terminal-fill"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-white fs-6 d-flex align-items-center gap-2">
+              <span>{{ project.title }}</span>
+              <button class="btn btn-sm btn-link p-0 text-cyan text-decoration-none" data-bs-toggle="modal" data-bs-target="#switchProjectModal" title="Switch or manage lab projects">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </div>
+            <div class="text-slate-muted text-xs d-flex align-items-center gap-2">
+              <span>AI & ICT Virtual Lab</span>
+              <span>•</span>
+              {% if project.language == 'python' %}
+                <span class="lang-badge lang-badge-python"><i class="bi bi-filetype-py"></i> Python 3.10 Engine</span>
+              {% elif project.language == 'javascript' %}
+                <span class="lang-badge lang-badge-javascript"><i class="bi bi-filetype-js"></i> JavaScript & Web</span>
+              {% else %}
+                <span class="lang-badge lang-badge-block"><i class="bi bi-puzzle-fill"></i> Scratch & Block Studio</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+
+        <!-- Submission Status Indicator -->
+        <div class="ms-2 d-none d-md-block">
+          {% if project.share_status == 'Draft' %}
+            <span class="badge bg-secondary bg-opacity-40 text-slate-muted border border-secondary border-opacity-30">
+              <i class="bi bi-lock-fill me-1"></i> Private Workspace
+            </span>
+          {% elif project.share_status == 'Shared' %}
+            <span class="badge bg-primary bg-opacity-25 text-cyan border border-primary border-opacity-40">
+              <i class="bi bi-person-check-fill me-1"></i> Submitted to {{ project.faculty_name or 'Teacher' }}
+            </span>
+          {% elif project.share_status == 'Reviewed' %}
+            <span class="badge bg-success bg-opacity-25 text-emerald border border-success border-opacity-40">
+              <i class="bi bi-award-fill me-1"></i> Evaluated: Grade {{ project.faculty_grade or 'A' }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right: Action Buttons -->
+      <div class="d-flex align-items-center gap-2">
+        
+        <!-- Save File Button -->
+        <button class="btn btn-glass btn-sm d-flex align-items-center gap-1.5" id="btnSaveFile" title="Save current file (Ctrl + S)">
+          <i class="bi bi-floppy2-fill text-cyan"></i>
+          <span class="d-none d-sm-inline">Save</span>
+          <span id="saveStatusIndicator" class="text-xs text-slate-muted"></span>
+        </button>
+
+        <!-- Run Code Button -->
+        <button class="btn btn-run-glow btn-sm d-flex align-items-center gap-1.5 px-3" id="btnRunCode" title="Execute Code (Ctrl + Enter)">
+          <i class="bi bi-play-fill fs-6"></i>
+          <span>Run</span>
+        </button>
+        <span id="runStatusBadge" class="ms-1 d-inline-flex align-items-center"></span>
+
+        <!-- Share with Teacher Modal Trigger (Student Only) -->
+        {% if not is_faculty %}
+          <button class="btn btn-share-teacher btn-sm d-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#shareTeacherModal">
+            <i class="bi bi-send-fill"></i>
+            <span class="d-none d-sm-inline">Share with Teacher</span>
+          </button>
+        {% else %}
+          <!-- Faculty Evaluation Action -->
+          <button class="btn btn-primary-glow btn-sm d-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#gradeProjectModal">
+            <i class="bi bi-mortarboard-fill"></i>
+            <span>Evaluate & Grade</span>
+          </button>
+        {% endif %}
+
+        <!-- New Project Button -->
+        <button class="btn btn-glass btn-sm" data-bs-toggle="modal" data-bs-target="#newProjectModal" title="Create New Project">
+          <i class="bi bi-folder-plus text-cyan"></i>
+        </button>
+
+        <!-- Toggle Bottom Panel -->
+        <button class="btn btn-glass btn-sm" id="btnToggleBottomPanel" title="Toggle Console Panel">
+          <i class="bi bi-layout-sidebar-inset-reverse"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Faculty Mentor Inspection Banner (if reviewing) -->
+  {% if is_faculty and project.student_name %}
+    <div class="bg-indigo bg-opacity-20 border-bottom border-indigo border-opacity-30 px-3 py-1.5 d-flex align-items-center justify-content-between text-xs text-indigo">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-mortarboard-fill fs-6"></i>
+        <span>Faculty Reviewing Student Submission: <strong>{{ project.student_name }}</strong> ({{ project.student_roll_no or 'Roll N/A' }} | Class: {{ project.student_class or 'AI Track' }})</span>
+        {% if project.submitted_at %}
+          <span class="text-slate-muted">• Submitted on {{ project.submitted_at }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="badge bg-indigo text-white">Confidential Faculty Access</span>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- ========================================================================
+       2. MAIN IDE WORKSPACE
+       ======================================================================== -->
+  <div class="ide-workspace">
+
+    <!-- LEFT SIDEBAR: FILE EXPLORER -->
+    <div class="ide-sidebar" id="ideSidebar">
+      <div class="sidebar-header">
+        <span><i class="bi bi-folder2-open me-1 text-cyan"></i> Project Explorer</span>
+        <div class="d-flex align-items-center gap-1">
+          <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white" onclick="openNewFileModal()" title="New File in target folder">
+            <i class="bi bi-file-earmark-plus"></i>
+          </button>
+          <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white" onclick="openNewFolderModal()" title="New Folder / Subfolder">
+            <i class="bi bi-folder-plus"></i>
+          </button>
+          <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white" onclick="location.reload()" title="Refresh Explorer">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Selected Destination Indicator -->
+      <div id="activeFolderIndicator" class="px-2 py-1.5 bg-black bg-opacity-40 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between" style="font-size: 0.73rem;">
+        <div class="d-flex align-items-center gap-1.5 text-truncate">
+          <i class="bi bi-geo-alt-fill text-amber" style="font-size: 0.7rem;"></i>
+          <span class="text-slate-muted">Target:</span>
+          <span class="text-cyan fw-bold font-monospace text-truncate" id="activeFolderLabel">/ (Root)</span>
+        </div>
+        <button id="btnClearActiveFolder" class="btn btn-link p-0 text-slate-muted hover-white text-xs text-decoration-none d-none" onclick="clearSelectedFolder()" title="Reset destination to root">
+          <i class="bi bi-x-circle"></i> Reset
+        </button>
+      </div>
+
+      <div class="file-tree-container" id="fileTreeContainer">
+        <!-- Folders -->
+        {% for folder in files if folder.is_folder %}
+          {% set folder_prefix = folder.folder_path.rstrip('/') ~ '/' ~ folder.name %}
+          {% set child_files = files | selectattr("is_folder", "equalto", 0) | selectattr("folder_path", "equalto", folder_prefix) | list %}
+          
+          <div class="tree-folder-group mb-1" id="folderGroup_{{ folder.id }}">
+            <div class="tree-folder-title" 
+                 id="folderTitle_{{ folder.id }}"
+                 data-folder-id="{{ folder.id }}"
+                 data-folder-path="{{ folder_prefix }}"
+                 onclick="selectFolder('{{ folder_prefix }}', {{ folder.id }})">
+              
+              <i class="bi bi-chevron-down folder-chevron" id="chevron_{{ folder.id }}" onclick="event.stopPropagation(); toggleFolder({{ folder.id }})"></i>
+              <i class="bi bi-folder-fill text-amber folder-icon" id="folderIcon_{{ folder.id }}"></i>
+              <span class="folder-name-text text-truncate">{{ folder.name }}</span>
+              <span class="badge bg-secondary bg-opacity-30 text-slate-muted ms-1 text-xs" style="font-size: 0.65rem;">{{ child_files|length }}</span>
+
+              <div class="item-actions">
+                <!-- Add File in this folder -->
+                <button class="btn btn-sm btn-link p-0 text-cyan hover-white" 
+                        onclick="event.stopPropagation(); openNewFileModalForFolder('{{ folder_prefix }}')" 
+                        title="Add File to {{ folder.name }}">
+                  <i class="bi bi-file-earmark-plus"></i>
+                </button>
+                <!-- Add Subfolder in this folder (Next Level) -->
+                <button class="btn btn-sm btn-link p-0 text-amber hover-white" 
+                        onclick="event.stopPropagation(); openNewFolderModalForParent('{{ folder_prefix }}')" 
+                        title="Add Subfolder to {{ folder.name }}">
+                  <i class="bi bi-folder-plus"></i>
+                </button>
+                <!-- Delete Folder -->
+                <button class="btn btn-sm btn-link p-0 text-danger hover-white" 
+                        onclick="event.stopPropagation(); confirmDeleteItem({{ folder.id }}, '{{ folder.name }}', true)" 
+                        title="Delete Folder">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="ms-3 ps-1 border-start border-secondary border-opacity-20 tree-folder-children" id="folderChildren_{{ folder.id }}">
+              {% for f in child_files %}
+                <div class="tree-item" 
+                     data-id="{{ f.id }}" 
+                     data-name="{{ f.name }}" 
+                     data-path="{{ f.folder_path }}" 
+                     data-type="{{ f.file_type }}"
+                     onclick="openFile({{ f.id }})">
+                  <div class="d-flex align-items-center gap-2 text-truncate">
+                    {% if f.file_type == 'python' %}
+                      <i class="bi bi-filetype-py text-cyan"></i>
+                    {% elif f.file_type == 'javascript' %}
+                      <i class="bi bi-filetype-js text-amber"></i>
+                    {% elif f.file_type == 'html' %}
+                      <i class="bi bi-filetype-html text-danger"></i>
+                    {% elif f.file_type == 'css' %}
+                      <i class="bi bi-filetype-css text-info"></i>
+                    {% elif f.file_type == 'block_scratch' %}
+                      <i class="bi bi-puzzle-fill text-emerald"></i>
+                    {% else %}
+                      <i class="bi bi-file-earmark-code text-slate-muted"></i>
+                    {% endif %}
+                    <span class="text-truncate">{{ f.name }}</span>
+                  </div>
+                  <div class="item-actions">
+                    <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white" onclick="event.stopPropagation(); promptRenameItem({{ f.id }}, '{{ f.name }}')" title="Rename">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-link p-0 text-danger" onclick="event.stopPropagation(); confirmDeleteItem({{ f.id }}, '{{ f.name }}', false)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              {% endfor %}
+              
+              {% if child_files|length == 0 %}
+                <div class="tree-empty-folder-card" 
+                     onclick="openNewFileModalForFolder('{{ folder_prefix }}')" 
+                     title="Empty folder: click to add file into {{ folder.name }}"
+                     role="button" tabindex="0">
+                  <div class="tree-empty-header">
+                    <div class="d-flex align-items-center gap-1.5 text-slate-muted">
+                      <i class="bi bi-folder2 text-amber opacity-80" style="font-size: 0.8rem;"></i>
+                      <span class="tree-empty-title">Empty folder</span>
+                    </div>
+                    <span class="badge bg-secondary bg-opacity-30 text-slate-muted px-1.5 py-0.5" style="font-size: 0.62rem;">0 items</span>
+                  </div>
+                  
+                  <div class="tree-empty-cta-pill">
+                    <i class="bi bi-plus-circle-fill text-cyan"></i>
+                    <span>Click to add file</span>
+                  </div>
+
+                  <div class="tree-empty-subactions">
+                    <span class="text-slate-muted opacity-70 text-truncate" style="font-size: 0.64rem; max-width: 90px;" title="{{ folder_prefix }}">{{ folder_prefix }}</span>
+                    <button type="button" 
+                            class="btn-empty-subfolder-link" 
+                            onclick="event.stopPropagation(); openNewFolderModalForParent('{{ folder_prefix }}')" 
+                            title="Create nested subfolder inside {{ folder.name }}">
+                      <i class="bi bi-folder-plus text-amber me-1"></i>+ Subfolder
+                    </button>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- Root Files -->
+        {% for f in files if not f.is_folder and (f.folder_path == '/' or not f.folder_path) %}
+          <div class="tree-item {% if loop.first %}active{% endif %}" 
+               data-id="{{ f.id }}" 
+               data-name="{{ f.name }}" 
+               data-path="{{ f.folder_path }}" 
+               data-type="{{ f.file_type }}"
+               onclick="openFile({{ f.id }})">
+            <div class="d-flex align-items-center gap-2 text-truncate">
+              {% if f.file_type == 'python' %}
+                <i class="bi bi-filetype-py text-cyan"></i>
+              {% elif f.file_type == 'javascript' %}
+                <i class="bi bi-filetype-js text-amber"></i>
+              {% elif f.file_type == 'html' %}
+                <i class="bi bi-filetype-html text-danger"></i>
+              {% elif f.file_type == 'css' %}
+                <i class="bi bi-filetype-css text-info"></i>
+              {% elif f.file_type == 'block_scratch' %}
+                <i class="bi bi-puzzle-fill text-emerald"></i>
+              {% else %}
+                <i class="bi bi-file-earmark-code text-slate-muted"></i>
+              {% endif %}
+              <span class="text-truncate">{{ f.name }}</span>
+            </div>
+            <div class="item-actions">
+              <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white" onclick="event.stopPropagation(); promptRenameItem({{ f.id }}, '{{ f.name }}')" title="Rename">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-link p-0 text-danger" onclick="event.stopPropagation(); confirmDeleteItem({{ f.id }}, '{{ f.name }}', false)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Quick Tips at bottom of sidebar -->
+      <div class="p-2 border-top border-secondary border-opacity-20 text-slate-muted text-xs">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="fw-bold">Shortcuts</span>
+          <kbd class="peak-kbd text-xs">Ctrl+Enter</kbd>
+        </div>
+        <div class="text-slate-muted" style="font-size: 0.68rem;">Run sandbox script directly in terminal.</div>
+      </div>
+    </div>
+
+    <!-- CENTER WORKSPACE: TABS + EDITOR / BLOCK CANVAS -->
+    <div class="ide-center">
+      
+      <!-- Top Tab Bar -->
+      <div class="ide-tabbar" id="ideTabbar">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Visual Scratch Mode Selector Bar (shown when Block file is open) -->
+      <div id="blockModeToggleBar" class="bg-dark bg-opacity-80 border-bottom border-secondary border-opacity-20 px-3 py-1.5 d-flex align-items-center justify-content-between d-none">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-success bg-opacity-20 text-emerald"><i class="bi bi-puzzle-fill me-1"></i> Visual Block Engine</span>
+          <span class="text-xs text-slate-muted">Assemble blocks on canvas; live Python compiles automatically.</span>
+        </div>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-glass active" id="btnViewCanvas" onclick="switchBlockView('canvas')">
+            <i class="bi bi-puzzle me-1"></i> Visual Canvas
+          </button>
+          <button class="btn btn-glass" id="btnViewCompiled" onclick="switchBlockView('code')">
+            <i class="bi bi-code-slash me-1"></i> Compiled Python
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Container -->
+      <div class="editor-wrapper" id="editorWrapper">
+        
+        <!-- Standard Code Editor (Text / Python / JS) -->
+        <div id="textEditorContainer" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+          <textarea id="codeEditorArea" class="editor-fallback-textarea"></textarea>
+        </div>
+
+        <!-- Scratch / Visual Block Coding Studio -->
+        <div id="blockStudioContainer" class="block-studio-container d-none">
+          
+          <!-- Block Palette -->
+          <div class="block-palette">
+            <div class="fw-bold text-white small mb-2"><i class="bi bi-boxes text-emerald me-1"></i> Block Palette</div>
+            
+            <div class="block-category-label text-amber">Events</div>
+            <button class="block-snippet-btn block-events" onclick="appendBlock('event_start')">
+              <i class="bi bi-flag-fill"></i> When Program Starts
+            </button>
+            <button class="block-snippet-btn block-events" onclick="appendBlock('event_interval')">
+              <i class="bi bi-stopwatch"></i> Every [1] Seconds
+            </button>
+
+            <div class="block-category-label text-primary">Actions & Output</div>
+            <button class="block-snippet-btn block-actions" onclick="appendBlock('action_print')">
+              <i class="bi bi-chat-text-fill"></i> Print Message [text]
+            </button>
+            <button class="block-snippet-btn block-actions" onclick="appendBlock('action_alert')">
+              <i class="bi bi-bell-fill"></i> Trigger System Alert
+            </button>
+
+            <div class="block-category-label text-success">Control & Loops</div>
+            <button class="block-snippet-btn block-loops" onclick="appendBlock('loop_repeat')">
+              <i class="bi bi-arrow-repeat"></i> Repeat [3] Times
+            </button>
+            <button class="block-snippet-btn block-loops" onclick="appendBlock('logic_if')">
+              <i class="bi bi-signpost-split-fill"></i> If [Sensor > 25] Then
+            </button>
+
+            <div class="block-category-label text-purple" style="color: #c084fc;">Math & Variables</div>
+            <button class="block-snippet-btn block-math" onclick="appendBlock('var_set')">
+              <i class="bi bi-code-square"></i> Set Variable [x] = [val]
+            </button>
+            <button class="block-snippet-btn block-math" onclick="appendBlock('var_change')">
+              <i class="bi bi-plus-slash-minus"></i> Change [x] by [1]
+            </button>
+
+            <div class="block-category-label text-cyan">Sensors & Telemetry</div>
+            <button class="block-snippet-btn block-sensors" onclick="appendBlock('sensor_read')">
+              <i class="bi bi-broadcast-pin"></i> Read IoT Sensor [Temp]
+            </button>
+
+            <div class="block-category-label text-danger">AI & Neural</div>
+            <button class="block-snippet-btn block-ai" onclick="appendBlock('ai_classify')">
+              <i class="bi bi-cpu-fill"></i> Predict AI Output [data]
+            </button>
+          </div>
+
+          <!-- Block Canvas -->
+          <div class="block-canvas" id="blockCanvas">
+            <!-- Active Blocks inserted dynamically -->
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Editor Status Bar -->
+      <div class="ide-statusbar">
+        <div class="d-flex align-items-center gap-3">
+          <span id="statusCursorPos">Ln 1, Col 1</span>
+          <span id="statusCharCount">0 chars</span>
+          <span id="statusFileType">Python</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span>UTF-8</span>
+          <span class="text-cyan"><i class="bi bi-shield-check me-1"></i> Sandboxed Environment</span>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           3. BOTTOM CONSOLE / OUTPUT / PREVIEW PANEL
+           ==================================================================== -->
+      <div class="ide-bottom-panel" id="ideBottomPanel">
+        <div class="bottom-panel-header">
+          <ul class="nav bottom-nav-tabs" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="tabTerminalBtn" data-bs-toggle="tab" data-bs-target="#panelTerminal" type="button">
+                <i class="bi bi-terminal-fill me-1 text-cyan"></i> Integrated Terminal
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tabPreviewBtn" data-bs-toggle="tab" data-bs-target="#panelPreview" type="button">
+                <i class="bi bi-globe me-1 text-amber"></i> Live Web Preview
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tabReviewBtn" data-bs-toggle="tab" data-bs-target="#panelReview" type="button">
+                <i class="bi bi-mortarboard-fill me-1 text-indigo"></i> Teacher Feedback
+                {% if project.share_status == 'Reviewed' %}
+                  <span class="badge bg-success ms-1">{{ project.faculty_grade or 'Graded' }}</span>
+                {% endif %}
+              </button>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center gap-2.5">
+            <button class="btn btn-sm btn-link text-slate-muted hover-white p-0" id="btnClearTerminal" title="Clear Console">
+              <i class="bi bi-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-link text-slate-muted hover-white p-0" id="btnCopyTerminal" title="Copy Output">
+              <i class="bi bi-clipboard"></i>
+            </button>
+            <button class="btn btn-sm btn-link text-slate-muted hover-white p-0" id="btnMaximizeTerminal" title="Expand / Restore Console Height">
+              <i class="bi bi-arrows-expand" id="iconExpandTerminal"></i>
+            </button>
+            <button class="btn btn-sm btn-link text-slate-muted hover-white p-0" id="btnCloseBottomPanel" title="Hide Console">
+              <i class="bi bi-dash-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-content flex-grow-1 overflow-hidden" style="display: flex; flex-direction: column;">
+          
+          <!-- Tab 1: Terminal -->
+          <div class="tab-pane fade show active h-100" id="panelTerminal" role="tabpanel" style="display: flex; flex-direction: column;">
+            <div class="terminal-box" id="terminalOutput">
+              <div class="terminal-system">⚡ GVEI Department of AI &amp; ICT — Virtual Engineering Terminal v2.4</div>
+              <div class="text-slate-muted">Type code in editor and click [Run] or press Ctrl + Enter to execute in the secure sandbox.</div>
+              <div class="mt-2"><span class="terminal-prompt">gvei-lab:~$</span> <span class="text-slate-muted">ready</span></div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Live Web Preview -->
+          <div class="tab-pane fade h-100" id="panelPreview" role="tabpanel" style="background: white;">
+            <iframe id="previewIframe" class="preview-iframe-wrapper" sandbox="allow-scripts allow-modals"></iframe>
+          </div>
+
+          <!-- Tab 3: Teacher Review & Feedback -->
+          <div class="tab-pane fade h-100 p-3 overflow-y-auto" id="panelReview" role="tabpanel">
+            <div class="glass-panel p-3 bg-dark bg-opacity-70 border-secondary">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-white mb-0">
+                  <i class="bi bi-person-badge text-cyan me-1"></i> Mentorship &amp; Evaluation Record
+                </h6>
+                {% if project.share_status == 'Draft' %}
+                  <span class="badge bg-secondary">Draft (Not Shared)</span>
+                {% elif project.share_status == 'Shared' %}
+                  <span class="badge bg-primary">Under Faculty Review</span>
+                {% elif project.share_status == 'Reviewed' %}
+                  <span class="badge bg-success">Reviewed: Grade {{ project.faculty_grade or 'A' }}</span>
+                {% endif %}
+              </div>
+
+              {% if project.shared_faculty_id %}
+                <div class="small text-slate-muted mb-2">
+                  <span>Assigned Mentor: <strong class="text-cyan">{{ project.faculty_name or 'Faculty Mentor' }}</strong></span>
+                  {% if project.submitted_at %}
+                    <span class="ms-3">• Submitted: <strong>{{ project.submitted_at }}</strong></span>
+                  {% endif %}
+                </div>
+
+                {% if project.submission_notes %}
+                  <div class="p-3 rounded-3 bg-cyan bg-opacity-10 border border-cyan border-opacity-30 mb-2">
+                    <div class="text-xs text-cyan fw-bold mb-1 d-flex align-items-center gap-1.5">
+                      <i class="bi bi-chat-left-quote-fill"></i> Your Submission Remarks to Mentor:
+                    </div>
+                    <div class="text-white-50 small">{{ project.submission_notes }}</div>
+                  </div>
+                {% endif %}
+
+                <div class="p-3 rounded-3 bg-black bg-opacity-50 border border-secondary border-opacity-30 mb-2">
+                  <div class="text-xs text-slate-muted text-uppercase fw-bold mb-1">Mentor Feedback &amp; Action Items</div>
+                  <div class="text-white small">
+                    {{ project.faculty_feedback or 'No written feedback submitted yet. Your teacher will run and assess your project.' }}
+                  </div>
+                </div>
+
+                {% if project.faculty_grade %}
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="text-xs text-slate-muted">Awarded Grade:</span>
+                    <span class="badge bg-gradient-cyan text-white fs-6 px-3 py-1">{{ project.faculty_grade }}</span>
+                  </div>
+                {% endif %}
+
+                {% if not is_faculty %}
+                  <div class="mt-3 pt-2 border-top border-secondary border-opacity-30 d-flex justify-content-between align-items-center">
+                    <span class="text-xs text-slate-muted"><i class="bi bi-arrow-repeat text-cyan me-1"></i> Continuous Mentorship Pipeline</span>
+                    <button class="btn btn-share-teacher btn-sm" data-bs-toggle="modal" data-bs-target="#shareTeacherModal">
+                      <i class="bi bi-send-check-fill me-1"></i> Update Submission / Resync
+                    </button>
+                  </div>
+                {% endif %}
+              {% else %}
+                <div class="text-center py-4 text-slate-muted small">
+                  <i class="bi bi-send-exclamation fs-3 text-cyan opacity-40 d-block mb-2"></i>
+                  This project has not been shared with any teacher yet.
+                  <div class="mt-2">
+                    <button class="btn btn-share-teacher btn-sm" data-bs-toggle="modal" data-bs-target="#shareTeacherModal">
+                      <i class="bi bi-share me-1"></i> Select Teacher from Dropdown &amp; Submit
+                    </button>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- ========================================================================
+     MODAL 1: SHARE WITH TEACHER (STRICT DROPDOWN SELECTION)
+     ======================================================================== -->
+<div class="modal fade" id="shareTeacherModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true" style="z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered">
+    <form id="shareWithTeacherForm" class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(24px); max-height: 88vh; display: flex; flex-direction: column;">
+      
+      <div class="modal-header border-secondary border-opacity-30 p-3 px-4 flex-shrink-0" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(6, 182, 212, 0.25)); border-bottom: 1px solid rgba(148, 163, 184, 0.2);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.35rem; background: rgba(99, 102, 241, 0.35); color: #818cf8; border-color: rgba(99, 102, 241, 0.6); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white brand-font mb-0" id="shareModalLabel">Share Lab Code with Teacher</h5>
+            <div class="text-white-50 text-xs mt-1 d-flex align-items-center gap-2 flex-wrap">
+              <span>Department Code Submission</span>
+              <span>•</span>
+              <span class="badge bg-cyan bg-opacity-20 text-cyan border border-cyan border-opacity-30 px-2 py-0.5 rounded-pill"><i class="bi bi-arrow-repeat me-1"></i> Real-time Database Sync</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-3 px-4 flex-grow-1 overflow-y-auto" style="max-height: 52vh; scrollbar-width: thin; scrollbar-color: rgba(6, 182, 212, 0.4) rgba(15, 23, 42, 0.5);">
+        
+        <div class="alert alert-info bg-cyan bg-opacity-10 border-cyan border-opacity-30 text-white text-xs p-2.5 rounded-3 mb-3 d-flex align-items-start gap-2">
+          <i class="bi bi-shield-lock-fill text-cyan fs-5 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <strong>Confidential Handover:</strong> Once submitted, your latest code files will be synchronized in the database pipeline and exclusively shared with your selected faculty mentor for inspection, execution, and grading.
+          </div>
+        </div>
+
+        <!-- TEACHER DROPDOWN SELECTOR -->
+        <div class="mb-3">
+          <label class="form-label-modern mb-1 fw-bold text-white small" for="facultySelect">
+            <i class="bi bi-person-check-fill text-cyan me-1"></i> Select Faculty Mentor *
+          </label>
+          <select name="faculty_id" id="facultySelect" class="form-select form-select-modern" required>
+            <option value="" disabled selected>-- Choose your teacher from the dropdown --</option>
+            {% for teacher in faculty_mentors %}
+              <option value="{{ teacher.id }}" {% if project.shared_faculty_id == teacher.id %}selected{% endif %}>
+                {{ teacher.name }} — {{ teacher.designation or 'Faculty Mentor' }} ({{ teacher.specialization or 'AI & ICT' }})
+              </option>
+            {% endfor %}
+          </select>
+          <div class="text-slate-muted text-xs mt-1">Select the mentor overseeing your practical lab or coursework.</div>
+        </div>
+
+        <!-- Submission Remarks / Assignment Details -->
+        <div class="mb-2">
+          <label class="form-label-modern mb-1 fw-bold text-white small" for="shareNote">
+            <i class="bi bi-card-text text-amber me-1"></i> Submission Remarks (Optional)
+          </label>
+          <textarea name="note" id="shareNote" class="form-control form-control-modern" rows="3" placeholder="e.g. Lab Exercise 3: Implementation of forward pass neural activation functions and IoT sensor telemetry parser.">{{ project.submission_notes or '' }}</textarea>
+          <div class="text-slate-muted text-xs mt-1">Add context, module details, or questions for your mentor.</div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer border-secondary border-opacity-30 p-3 px-4 flex-shrink-0 d-flex justify-content-between align-items-center" style="background: rgba(10, 15, 30, 0.98); border-top: 1px solid rgba(148, 163, 184, 0.2);">
+        <button type="button" class="btn btn-outline-secondary text-slate-muted px-3" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i> Cancel
+        </button>
+        <button type="submit" class="btn btn-share-teacher px-4 py-2.5 fw-bold d-flex align-items-center gap-2 shadow-lg" id="btnConfirmShare">
+          <i class="bi bi-send-check-fill fs-6 text-white"></i>
+          <span>Submit &amp; Sync to Teacher</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 2: CREATE NEW PROJECT
+     ======================================================================== -->
+<div class="modal fade" id="newProjectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <h5 class="modal-title fw-bold text-white brand-font mb-0">
+          <i class="bi bi-folder-plus text-cyan me-2"></i> Create New Lab Project
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('virtual_lab_create_project') }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label-modern">Project Title *</label>
+            <input type="text" name="title" class="form-control form-control-modern" placeholder="e.g. Computer Vision Lab - Edge Detection" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-modern">Target Language Runtime *</label>
+            <select name="language" class="form-select form-select-modern" required>
+              <option value="python" selected>🐍 Python 3.10 Engine (Algorithms, AI &amp; Math)</option>
+              <option value="javascript">⚡ Modern JavaScript (DOM, Web Sandbox &amp; Telemetry)</option>
+              <option value="block_scratch">🧩 Scratch &amp; Visual Block Studio (Algorithmic Logic)</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label-modern">Project Description</label>
+            <textarea name="description" class="form-control form-control-modern" rows="2" placeholder="Brief objectives or laboratory scope..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow px-4">Create Project</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 3: SWITCH / MANAGE PROJECTS
+     ======================================================================== -->
+<div class="modal fade" id="switchProjectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <h5 class="modal-title fw-bold text-white brand-font mb-0">
+          <i class="bi bi-collection-fill text-cyan me-2"></i> My Virtual Lab Projects
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-3 overflow-y-auto" style="max-height: 400px;">
+        <div class="d-grid gap-2">
+          {% for p in user_projects %}
+            <div class="p-3 rounded-3 border {% if p.id == project.id %}border-cyan bg-cyan bg-opacity-10{% else %}border-secondary border-opacity-30 bg-dark bg-opacity-50{% endif %} d-flex align-items-center justify-content-between">
+              <div>
+                <a href="{{ url_for('virtual_lab', project_id=p.id) }}" class="fw-bold text-white text-decoration-none d-block">
+                  {{ p.title }}
+                </a>
+                <div class="text-xs text-slate-muted mt-1">
+                  <span class="text-uppercase">{{ p.language }}</span> • {{ p.share_status }}
+                  {% if is_faculty and p.student_name %}
+                    • Student: <span class="text-cyan">{{ p.student_name }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('virtual_lab', project_id=p.id) }}" class="btn btn-sm btn-glass text-cyan">
+                  Open
+                </a>
+                {% if not is_faculty and p.student_id == session['user']['id'] %}
+                  <button class="btn btn-sm btn-glass text-danger" onclick="confirmDeleteProject({{ p.id }}, '{{ p.title }}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="modal-footer border-secondary border-opacity-30 p-3">
+        <button class="btn btn-primary-glow btn-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+          <i class="bi bi-plus-lg me-1"></i> New Project
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 4: NEW FILE MODAL
+     ======================================================================== -->
+<div class="modal fade" id="newFileModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(24px);">
+      <div class="modal-header border-secondary border-opacity-30 p-3">
+        <h6 class="modal-title fw-bold text-white mb-0 d-flex align-items-center gap-1.5">
+          <i class="bi bi-file-earmark-plus text-cyan"></i>
+          <span>Create New File</span>
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="newFileForm">
+        <div class="modal-body p-3">
+          <div class="mb-2.5">
+            <label class="form-label-modern text-xs fw-semibold mb-1" for="newFileFolderPath">
+              <i class="bi bi-folder-check text-amber me-1"></i> Destination Folder
+            </label>
+            <select name="folder_path" id="newFileFolderPath" class="form-select form-select-modern text-xs" required>
+              <option value="/">📁 Root Directory (/)</option>
+              {% for folder in files if folder.is_folder %}
+                {% set f_path = folder.folder_path.rstrip('/') ~ '/' ~ folder.name %}
+                <option value="{{ f_path }}">📂 {{ f_path }}</option>
+              {% endfor %}
+            </select>
+            <div class="text-slate-muted text-xs mt-0.5">Select target directory for this file.</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label-modern text-xs fw-semibold mb-1" for="newFileName">
+              <i class="bi bi-tag text-cyan me-1"></i> File Name with Extension *
+            </label>
+            <input type="text" name="name" id="newFileName" class="form-control form-control-modern text-xs" placeholder="e.g. sensor.py or script.js" required autocomplete="off">
+            <div class="text-slate-muted text-xs mt-0.5">Supports .py, .js, .html, .css, .json, .blocks, .md</div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary border-opacity-30 p-2.5 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-glass btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow btn-sm px-3 fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Create File
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 5: NEW FOLDER MODAL
+     ======================================================================== -->
+<div class="modal fade" id="newFolderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(24px);">
+      <div class="modal-header border-secondary border-opacity-30 p-3">
+        <h6 class="modal-title fw-bold text-white mb-0 d-flex align-items-center gap-1.5">
+          <i class="bi bi-folder-plus text-amber"></i>
+          <span>Create New Folder</span>
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="newFolderForm">
+        <div class="modal-body p-3">
+          <div class="mb-2.5">
+            <label class="form-label-modern text-xs fw-semibold mb-1" for="newFolderParentPath">
+              <i class="bi bi-diagram-3 text-cyan me-1"></i> Parent Destination (Hierarchy Level)
+            </label>
+            <select name="folder_path" id="newFolderParentPath" class="form-select form-select-modern text-xs">
+              <option value="/">📁 Root Directory (/)</option>
+              {% for folder in files if folder.is_folder %}
+                {% set f_path = folder.folder_path.rstrip('/') ~ '/' ~ folder.name %}
+                <option value="{{ f_path }}">📂 {{ f_path }}</option>
+              {% endfor %}
+            </select>
+            <div class="text-slate-muted text-xs mt-0.5">Select a parent folder to nest this folder into the next level.</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label-modern text-xs fw-semibold mb-1" for="newFolderName">
+              <i class="bi bi-tag text-amber me-1"></i> Folder Name *
+            </label>
+            <input type="text" name="name" id="newFolderName" class="form-control form-control-modern text-xs" placeholder="e.g. telemetry, utils, or dataset" required autocomplete="off">
+          </div>
+        </div>
+        <div class="modal-footer border-secondary border-opacity-30 p-2.5 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-glass btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow btn-sm px-3 fw-semibold">
+            <i class="bi bi-folder-plus me-1"></i> Create Folder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 6: FACULTY GRADE & FEEDBACK MODAL (FACULTY ONLY)
+     ======================================================================== -->
+{% if is_faculty %}
+<div class="modal fade" id="gradeProjectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <h5 class="modal-title fw-bold text-white brand-font mb-0">
+          <i class="bi bi-award text-cyan me-2"></i> Evaluate Lab Submission
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{{ url_for('faculty_virtual_lab_grade') }}">
+        <input type="hidden" name="project_id" value="{{ project.id }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label-modern">Award Grade *</label>
+            <select name="grade" class="form-select form-select-modern" required>
+              <option value="A+" {% if project.faculty_grade == 'A+' %}selected{% endif %}>Grade A+ (Distinction / Mastery)</option>
+              <option value="A" {% if project.faculty_grade == 'A' %}selected{% endif %}>Grade A (Excellent Execution)</option>
+              <option value="B+" {% if project.faculty_grade == 'B+' %}selected{% endif %}>Grade B+ (Good Implementation)</option>
+              <option value="B" {% if project.faculty_grade == 'B' %}selected{% endif %}>Grade B (Satisfactory)</option>
+              <option value="C" {% if project.faculty_grade == 'C' %}selected{% endif %}>Grade C (Needs Improvement)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-modern">Evaluation Status *</label>
+            <select name="status" class="form-select form-select-modern" required>
+              <option value="Reviewed" selected>Mark as Reviewed &amp; Approved</option>
+              <option value="Shared">Keep Under Review</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label-modern">Actionable Feedback &amp; Review Remarks *</label>
+            <textarea name="feedback" class="form-control form-control-modern" rows="4" placeholder="Detail the student's algorithmic accuracy, code cleanliness, and areas for refinement..." required>{{ project.faculty_feedback or '' }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary border-opacity-30 p-3">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow px-4">Submit Evaluation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ========================================================================
+     STUDIO CUSTOM ANIMATED DIALOG (CONFIRM & PROMPT & DELETE)
+     ======================================================================== -->
+<div class="studio-dialog-overlay" id="studioDialogOverlay" style="display: none;">
+  <div class="studio-dialog-backdrop" onclick="studioDialogClose(false)"></div>
+  
+  <div class="studio-dialog-card" id="studioDialogCard" role="dialog" aria-modal="true" aria-labelledby="studioDialogTitle">
+    <!-- Top Dynamic Neon Accent Glow -->
+    <div class="studio-dialog-glow" id="studioDialogGlow"></div>
+    
+    <!-- Dialog Body -->
+    <div class="studio-dialog-inner">
+      
+      <!-- Animated Icon Bubble with expanding ripple -->
+      <div class="studio-dialog-icon-wrapper" id="studioDialogIconWrapper">
+        <div class="studio-dialog-icon-ripple" id="studioDialogIconRipple"></div>
+        <div class="studio-dialog-icon-circle" id="studioDialogIconCircle">
+          <i class="bi bi-trash3-fill" id="studioDialogIcon"></i>
+        </div>
+      </div>
+      
+      <!-- Content Column -->
+      <div class="studio-dialog-content">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="studio-dialog-category-badge" id="studioDialogBadge">VIRTUAL LAB ACTION</span>
+          <button type="button" class="studio-dialog-close-x" onclick="studioDialogClose(false)" title="Close (Esc)">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        
+        <h3 class="studio-dialog-title" id="studioDialogTitle">Delete Folder?</h3>
+        
+        <p class="studio-dialog-message" id="studioDialogMessage">
+          Are you sure you want to delete this folder and all its contents?
+        </p>
+
+        <!-- Target Item Highlight Chip -->
+        <div class="studio-dialog-item-chip" id="studioDialogItemChip">
+          <div class="d-flex align-items-center gap-2 text-truncate">
+            <i class="bi bi-folder-fill text-amber" id="studioDialogItemIcon"></i>
+            <span class="studio-dialog-item-name font-monospace text-truncate" id="studioDialogItemName">utils</span>
+          </div>
+          <span class="studio-dialog-item-type badge bg-secondary bg-opacity-30 text-slate-muted" id="studioDialogItemType">Folder</span>
+        </div>
+
+        <!-- Contextual Warning Callout -->
+        <div class="studio-dialog-callout" id="studioDialogCallout">
+          <i class="bi bi-exclamation-triangle-fill flex-shrink-0" id="studioDialogCalloutIcon"></i>
+          <div id="studioDialogCalloutText">
+            All nested files and code will be permanently deleted from this project. This action cannot be reversed.
+          </div>
+        </div>
+
+        <!-- Optional Prompt Input (for Rename Item) -->
+        <div class="studio-dialog-prompt-field d-none" id="studioDialogPromptField">
+          <label class="form-label-modern text-xs fw-semibold mb-1" id="studioDialogPromptLabel" for="studioDialogPromptInput">
+            New Name
+          </label>
+          <div class="position-relative">
+            <input type="text" 
+                   class="form-control form-control-modern pe-4" 
+                   id="studioDialogPromptInput" 
+                   placeholder="e.g. filename.py" 
+                   autocomplete="off" 
+                   spellcheck="false">
+            <i class="bi bi-pencil-fill position-absolute end-0 top-50 translate-middle-y me-3 text-slate-muted opacity-50" style="font-size: 0.8rem; pointer-events: none;"></i>
+          </div>
+          <div class="studio-dialog-prompt-hint text-slate-muted text-xs mt-1" id="studioDialogPromptHint">
+            Supports valid file extensions (.py, .js, .html, .css, .json, .blocks)
+          </div>
+          <div class="text-danger text-xs mt-1 d-none" id="studioDialogPromptError"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Footer Buttons -->
+    <div class="studio-dialog-footer">
+      <button type="button" class="btn btn-dialog-ghost" id="btnStudioDialogCancel" onclick="studioDialogClose(false)">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-dialog-action btn-action-danger" id="btnStudioDialogConfirm">
+        <i class="bi bi-trash3-fill me-1.5" id="btnStudioDialogIcon"></i>
+        <span id="btnStudioDialogLabel">Delete Permanently</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Studio Toast Container -->
+<div class="studio-toast-container" id="studioToastContainer"></div>
+{% endblock %}
+
+{% block scripts %}
+<!-- ========================================================================
+     CLIENT-SIDE IDE ENGINE & LOGIC
+     ======================================================================== -->
+<script>
+  // Project & File Database Store from Backend
+  const PROJECT_ID = {{ project.id }};
+  const PROJECT_LANG = '{{ project.language }}';
+  
+  // All files data passed from Jinja
+  let projectFiles = [
+    {% for f in files %}
+      {
+        id: {{ f.id }},
+        name: '{{ f.name|replace("'", "\\'") }}',
+        folder_path: '{{ f.folder_path|replace("'", "\\'") }}',
+        is_folder: {{ f.is_folder }},
+        file_type: '{{ f.file_type }}',
+        content: {{ (f.content or '')|tojson }}
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  let activeFileId = null;
+  let openTabs = [];
+  let codeEditorInstance = null;
+  let activeBlockView = 'canvas';
+  let currentSelectedFolder = "/";
+
+  // Initialize IDE
+  document.addEventListener("DOMContentLoaded", () => {
+    initCodeEditor();
+    
+    // Check if a specific file should be restored or pick initial
+    const lastOpenedName = sessionStorage.getItem("lastOpenedFileName");
+    let initialFile = null;
+    if (lastOpenedName) {
+      sessionStorage.removeItem("lastOpenedFileName");
+      initialFile = projectFiles.find(f => !f.is_folder && f.name === lastOpenedName);
+    }
+    if (!initialFile) {
+      initialFile = (PROJECT_LANG === 'block_scratch' ? projectFiles.find(f => !f.is_folder && f.name.endsWith('.blocks')) : null) ||
+                    projectFiles.find(f => !f.is_folder && f.name.endsWith('.py')) ||
+                    projectFiles.find(f => !f.is_folder && f.name.endsWith('.blocks')) ||
+                    projectFiles.find(f => !f.is_folder && f.name.endsWith('.js')) ||
+                    projectFiles.find(f => !f.is_folder && f.name.endsWith('.html')) ||
+                    projectFiles.find(f => !f.is_folder);
+    }
+
+    if (initialFile) {
+      openFile(initialFile.id);
+    }
+
+    // Restore selected folder if stored (e.g. user just created a folder)
+    const lastFolder = sessionStorage.getItem("lastSelectedFolder");
+    if (lastFolder) {
+      sessionStorage.removeItem("lastSelectedFolder");
+      const folderEl = document.querySelector(`[data-folder-path="${lastFolder}"]`);
+      const fId = folderEl ? folderEl.getAttribute("data-folder-id") : null;
+      selectFolder(lastFolder, fId ? parseInt(fId) : null);
+    }
+
+    // Attach Event Listeners
+    setupShortcuts();
+    setupExecutionHandlers();
+    setupShareHandler();
+    setupFileCreationHandlers();
+  });
+
+  // ---------------------------------------------------------------------------
+  // CodeMirror Initialization
+  // ---------------------------------------------------------------------------
+  function initCodeEditor() {
+    const textarea = document.getElementById("codeEditorArea");
+    if (typeof CodeMirror !== "undefined") {
+      codeEditorInstance = CodeMirror.fromTextArea(textarea, {
+        lineNumbers: true,
+        theme: "material-darker",
+        mode: "python",
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true
+      });
+
+      codeEditorInstance.on("cursorActivity", () => {
+        const pos = codeEditorInstance.getCursor();
+        document.getElementById("statusCursorPos").textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+      });
+
+      codeEditorInstance.on("change", () => {
+        const content = codeEditorInstance.getValue();
+        document.getElementById("statusCharCount").textContent = `${content.length} chars`;
+        document.getElementById("saveStatusIndicator").textContent = "• Unsaved";
+
+        // Update local file cache
+        const file = projectFiles.find(f => f.id === activeFileId);
+        if (file) {
+          file.content = content;
+        }
+      });
+    } else {
+      // Fallback standard textarea
+      textarea.addEventListener("input", () => {
+        document.getElementById("saveStatusIndicator").textContent = "• Unsaved";
+        const file = projectFiles.find(f => f.id === activeFileId);
+        if (file) file.content = textarea.value;
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab Management & File Opening
+  // ---------------------------------------------------------------------------
+  function openFile(fileId) {
+    const file = projectFiles.find(f => f.id === fileId);
+    if (!file || file.is_folder) return;
+
+    activeFileId = fileId;
+
+    if (!openTabs.includes(fileId)) {
+      openTabs.push(fileId);
+    }
+
+    renderTabs();
+    highlightFileInTree(fileId);
+
+    // Toggle Scratch Studio vs Text Editor
+    const isBlockFile = file.file_type === 'block_scratch' || file.name.endsWith('.blocks');
+    const blockToggleBar = document.getElementById("blockModeToggleBar");
+    const blockStudioContainer = document.getElementById("blockStudioContainer");
+    const textEditorContainer = document.getElementById("textEditorContainer");
+
+    if (isBlockFile) {
+      blockToggleBar.classList.remove("d-none");
+      blockStudioContainer.classList.remove("d-none");
+      textEditorContainer.classList.add("d-none");
+      loadBlocksFromJSON(file.content);
+    } else {
+      blockToggleBar.classList.add("d-none");
+      blockStudioContainer.classList.add("d-none");
+      textEditorContainer.classList.remove("d-none");
+
+      // Set editor mode
+      let mode = "python";
+      if (file.name.endsWith('.js')) mode = "javascript";
+      else if (file.name.endsWith('.html') || file.name.endsWith('.htm')) mode = "htmlmixed";
+      else if (file.name.endsWith('.css')) mode = "css";
+      else if (file.name.endsWith('.md')) mode = "markdown";
+
+      if (codeEditorInstance) {
+        codeEditorInstance.setOption("mode", mode);
+        codeEditorInstance.setValue(file.content || "");
+        codeEditorInstance.clearHistory();
+        setTimeout(() => codeEditorInstance.refresh(), 50);
+      } else {
+        document.getElementById("codeEditorArea").value = file.content || "";
+      }
+
+      document.getElementById("statusFileType").textContent = file.name.split('.').pop().toUpperCase();
+      document.getElementById("statusCharCount").textContent = `${(file.content || '').length} chars`;
+      document.getElementById("saveStatusIndicator").textContent = "";
+    }
+  }
+
+  function renderTabs() {
+    const tabbar = document.getElementById("ideTabbar");
+    tabbar.innerHTML = "";
+
+    openTabs.forEach(fileId => {
+      const file = projectFiles.find(f => f.id === fileId);
+      if (!file) return;
+
+      const tab = document.createElement("div");
+      tab.className = `ide-tab ${fileId === activeFileId ? 'active' : ''}`;
+      
+      let iconClass = 'bi-file-code';
+      if (file.file_type === 'python') iconClass = 'bi-filetype-py text-cyan';
+      else if (file.file_type === 'javascript') iconClass = 'bi-filetype-js text-amber';
+      else if (file.file_type === 'html') iconClass = 'bi-filetype-html text-danger';
+      else if (file.file_type === 'css') iconClass = 'bi-filetype-css text-info';
+      else if (file.file_type === 'block_scratch') iconClass = 'bi-puzzle-fill text-emerald';
+
+      tab.innerHTML = `
+        <i class="bi ${iconClass}"></i>
+        <span>${file.name}</span>
+        <span class="tab-close" onclick="event.stopPropagation(); closeTab(${fileId})">×</span>
+      `;
+      tab.onclick = () => openFile(fileId);
+      tabbar.appendChild(tab);
+    });
+  }
+
+  function closeTab(fileId) {
+    openTabs = openTabs.filter(id => id !== fileId);
+    if (activeFileId === fileId) {
+      if (openTabs.length > 0) {
+        openFile(openTabs[openTabs.length - 1]);
+      } else {
+        activeFileId = null;
+        if (codeEditorInstance) codeEditorInstance.setValue("");
+      }
+    }
+    renderTabs();
+  }
+
+  function highlightFileInTree(fileId) {
+    document.querySelectorAll(".tree-item").forEach(el => {
+      if (parseInt(el.getAttribute("data-id")) === fileId) {
+        el.classList.add("active");
+      } else {
+        el.classList.remove("active");
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Save File Functionality
+  // ---------------------------------------------------------------------------
+  async function saveActiveFile() {
+    if (!activeFileId) return;
+    const file = projectFiles.find(f => f.id === activeFileId);
+    if (!file) return;
+
+    let contentToSave = "";
+    const isBlockFile = file.file_type === 'block_scratch' || file.name.endsWith('.blocks');
+
+    if (isBlockFile) {
+      contentToSave = getBlocksJSON();
+    } else {
+      contentToSave = codeEditorInstance ? codeEditorInstance.getValue() : document.getElementById("codeEditorArea").value;
+    }
+
+    const indicator = document.getElementById("saveStatusIndicator");
+    indicator.textContent = "Saving...";
+
+    try {
+      const res = await fetch("/virtual-lab/file/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: activeFileId, content: contentToSave })
+      });
+      const data = await res.json();
+      if (data.success) {
+        indicator.textContent = `Saved (${data.saved_at})`;
+        file.content = contentToSave;
+      } else {
+        indicator.textContent = "Error saving";
+      }
+    } catch (e) {
+      indicator.textContent = "Failed";
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Execution Engine (Python Subprocess & JS Web Sandbox)
+  // ---------------------------------------------------------------------------
+  async function executeActiveCode() {
+    const terminal = document.getElementById("terminalOutput");
+    const runBtn = document.getElementById("btnRunCode");
+    const statusBadge = document.getElementById("runStatusBadge");
+    const panel = document.getElementById("ideBottomPanel");
+
+    // Ensure bottom console panel is visible
+    if (panel) {
+      panel.style.display = "flex";
+    }
+
+    // Make sure terminal tab is active
+    const termTabBtn = document.getElementById("tabTerminalBtn");
+    if (termTabBtn) {
+      if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+        new bootstrap.Tab(termTabBtn).show();
+      } else {
+        termTabBtn.click();
+      }
+    }
+
+    // Auto-save before running
+    await saveActiveFile();
+
+    const activeFile = projectFiles.find(f => f.id === activeFileId);
+    const activeFileName = activeFile ? activeFile.name : "main.py";
+
+    runBtn.disabled = true;
+    runBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Running...`;
+    if (statusBadge) {
+      statusBadge.innerHTML = `<span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-40 px-2 py-1"><span class="spinner-border spinner-border-sm me-1" style="width: 10px; height: 10px;"></span>Running ${activeFileName}...</span>`;
+    }
+
+    // 1. Python Execution & Block Studio (Compiled Python)
+    if (PROJECT_LANG === 'python' || PROJECT_LANG === 'block_scratch' || activeFileName.endsWith('.py')) {
+      let codeToRun = "";
+      if (activeFile && activeFile.file_type === 'block_scratch') {
+        codeToRun = compileBlocksToPython();
+      } else {
+        codeToRun = codeEditorInstance ? codeEditorInstance.getValue() : document.getElementById("codeEditorArea").value;
+      }
+
+      appendTerminalLine(`gvei-lab:~$ python ${activeFileName}`, "terminal-prompt");
+
+      try {
+        const res = await fetch("/virtual-lab/execute-python", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: codeToRun,
+            project_id: PROJECT_ID,
+            filename: activeFileName
+          })
+        });
+
+        const data = await res.json();
+        
+        let hasOutput = false;
+        if (data.stdout && data.stdout.trim().length > 0) {
+          appendTerminalLine(data.stdout, "terminal-stdout");
+          hasOutput = true;
+        }
+        if (data.stderr && data.stderr.trim().length > 0) {
+          appendTerminalLine(data.stderr, "terminal-stderr");
+          hasOutput = true;
+        }
+        if (!hasOutput) {
+          appendTerminalLine(`[Execution complete in ${data.execution_time}s — No stdout printed. Use print() to display output]`, "terminal-system");
+        }
+
+        const isSuccess = data.exit_code === 0;
+        const statusMsg = `[Done: Exit code ${data.exit_code} | Execution time: ${data.execution_time}s]`;
+        appendTerminalLine(statusMsg, isSuccess ? "terminal-system" : "terminal-stderr");
+
+        if (statusBadge) {
+          if (isSuccess) {
+            statusBadge.innerHTML = `<span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-40 px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Finished (${data.execution_time}s)</span>`;
+          } else {
+            statusBadge.innerHTML = `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-40 px-2 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Exit ${data.exit_code} (Error)</span>`;
+          }
+        }
+
+      } catch (err) {
+        appendTerminalLine(`Network / Execution error: ${err.message}`, "terminal-stderr");
+        if (statusBadge) {
+          statusBadge.innerHTML = `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-40 px-2 py-1"><i class="bi bi-exclamation-circle-fill me-1"></i>Error</span>`;
+        }
+      }
+
+    } else if (PROJECT_LANG === 'javascript' || activeFileName.endsWith('.js') || activeFileName.endsWith('.html')) {
+      // 2. JavaScript / HTML Live Execution via Sandboxed Web Preview
+      appendTerminalLine(`gvei-lab:~$ node --preview ${activeFileName}`, "terminal-prompt");
+      runLiveWebPreview();
+      appendTerminalLine(`[Live Web Preview Updated in Preview Tab]`, "terminal-system");
+      if (statusBadge) {
+        statusBadge.innerHTML = `<span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-40 px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Preview Live</span>`;
+      }
+    }
+
+    runBtn.disabled = false;
+    runBtn.innerHTML = `<i class="bi bi-play-fill fs-6"></i> <span>Run</span>`;
+  }
+
+  function appendTerminalLine(text, styleClass) {
+    const terminal = document.getElementById("terminalOutput");
+    const line = document.createElement("div");
+    line.className = styleClass || "terminal-stdout";
+    line.textContent = text;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  function runLiveWebPreview() {
+    const iframe = document.getElementById("previewIframe");
+    
+    // Find index.html, style.css, script.js
+    const htmlFile = projectFiles.find(f => f.name.endsWith('.html')) || { content: "<div id='app'></div>" };
+    const cssFile = projectFiles.find(f => f.name.endsWith('.css')) || { content: "" };
+    const jsFile = projectFiles.find(f => f.name.endsWith('.js')) || { content: "" };
+
+    const interceptedScript = `
+      <style>${cssFile.content || ''}</style>
+      <script>
+        // Forward console logs to parent IDE terminal
+        (function() {
+          const oldLog = console.log;
+          const oldErr = console.error;
+          console.log = function(...args) {
+            oldLog.apply(console, args);
+            window.parent.postMessage({ type: 'CONSOLE_LOG', data: args.join(' ') }, '*');
+          };
+          console.error = function(...args) {
+            oldErr.apply(console, args);
+            window.parent.postMessage({ type: 'CONSOLE_ERROR', data: args.join(' ') }, '*');
+          };
+        })();
+      <\/script>
+      ${htmlFile.content || ''}
+      <script>${jsFile.content || ''}<\/script>
+    `;
+
+    iframe.srcdoc = interceptedScript;
+
+    // Switch to preview tab
+    document.getElementById("tabPreviewBtn").click();
+  }
+
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === 'CONSOLE_LOG') {
+      appendTerminalLine(`[console.log]: ${e.data.data}`, "terminal-stdout");
+    } else if (e.data && e.data.type === 'CONSOLE_ERROR') {
+      appendTerminalLine(`[console.error]: ${e.data.data}`, "terminal-stderr");
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Share Code with Teacher (Strict Dropdown Submission & Pipeline Sync)
+  // ---------------------------------------------------------------------------
+  function setupShareHandler() {
+    const form = document.getElementById("shareWithTeacherForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const facultySelect = document.getElementById("facultySelect");
+      const facultyId = facultySelect.value;
+      const note = document.getElementById("shareNote").value;
+      const btn = document.getElementById("btnConfirmShare");
+
+      if (!facultyId) {
+        showStudioToast("Please select a faculty mentor from the dropdown.", "error");
+        facultySelect.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Syncing with Mentor &amp; Database...`;
+
+      // Auto-save the active file before submitting
+      try {
+        if (typeof saveActiveFile === 'function') {
+          await saveActiveFile();
+        }
+      } catch (saveErr) {
+        console.warn("Pre-submission auto-save:", saveErr);
+      }
+
+      try {
+        const res = await fetch(`/virtual-lab/project/${PROJECT_ID}/share`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ faculty_id: facultyId, note: note })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          // Close modal cleanly
+          const modalEl = document.getElementById("shareTeacherModal");
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+
+          showStudioToast("Project synced and submitted to faculty mentor!", "success");
+
+          // Terminal visual pipeline feedback
+          appendTerminalLine(`⚡ [DATABASE PIPELINE]: Project #${PROJECT_ID} successfully saved and linked to mentor.`, "terminal-stdout");
+          appendTerminalLine(`⚡ [MENTOR SYNC]: Advisory notification dispatched to ${data.teacher_name || 'Faculty Mentor'}.`, "terminal-stdout");
+          appendTerminalLine(`⚡ [STATUS]: State is now 'Shared'. Submitted at ${data.submitted_at || 'just now'}.`, "terminal-prompt");
+
+          // Open review tab to show updated submission records
+          const reviewTabBtn = document.getElementById("tabReviewBtn");
+          if (reviewTabBtn) {
+            reviewTabBtn.click();
+          }
+
+          // Show confirmation banner or smooth reload after brief delay
+          setTimeout(() => {
+            location.reload();
+          }, 900);
+        } else {
+          showStudioToast(`Submission error: ${data.error || 'Failed to submit.'}`, "error");
+          btn.disabled = false;
+          btn.innerHTML = `<i class="bi bi-send-check-fill fs-6 text-white me-1"></i> Submit &amp; Sync to Teacher`;
+        }
+      } catch (err) {
+        showStudioToast("Submission failed. Please check network connection.", "error");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-send-check-fill fs-6 text-white me-1"></i> Submit &amp; Sync to Teacher`;
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Visual Scratch / Block Studio Engine
+  // ---------------------------------------------------------------------------
+  let blockProgram = [];
+
+  function loadBlocksFromJSON(jsonString) {
+    try {
+      blockProgram = JSON.parse(jsonString || "[]");
+    } catch (e) {
+      blockProgram = [
+        { id: "b1", type: "event_start", text: "When Program Starts", category: "events" },
+        { id: "b2", type: "action_print", message: "Hello AI & ICT Lab!", category: "actions" }
+      ];
+    }
+    renderBlockCanvas();
+  }
+
+  function appendBlock(type) {
+    const id = "b_" + Date.now();
+    let newBlock = { id: id, type: type };
+
+    if (type === 'event_start') {
+      newBlock.text = "When Program Starts";
+      newBlock.category = "events";
+    } else if (type === 'event_interval') {
+      newBlock.interval = 1;
+      newBlock.category = "events";
+    } else if (type === 'action_print') {
+      newBlock.message = "Telemetry update active";
+      newBlock.category = "actions";
+    } else if (type === 'action_alert') {
+      newBlock.alert_msg = "Threshold exceeded!";
+      newBlock.category = "actions";
+    } else if (type === 'loop_repeat') {
+      newBlock.times = 3;
+      newBlock.category = "loops";
+    } else if (type === 'logic_if') {
+      newBlock.condition = "sensor_val > 30";
+      newBlock.category = "loops";
+    } else if (type === 'var_set') {
+      newBlock.var_name = "sensor_val";
+      newBlock.var_val = "25.4";
+      newBlock.category = "math";
+    } else if (type === 'var_change') {
+      newBlock.var_name = "sensor_val";
+      newBlock.delta = "1.5";
+      newBlock.category = "math";
+    } else if (type === 'sensor_read') {
+      newBlock.sensor_type = "Temperature";
+      newBlock.category = "sensors";
+    } else if (type === 'ai_classify') {
+      newBlock.model = "SigmoidClassifier";
+      newBlock.category = "ai";
+    }
+
+    blockProgram.push(newBlock);
+    renderBlockCanvas();
+    saveActiveFile();
+  }
+
+  function renderBlockCanvas() {
+    const canvas = document.getElementById("blockCanvas");
+    canvas.innerHTML = "";
+
+    if (blockProgram.length === 0) {
+      canvas.innerHTML = `
+        <div class="text-center py-5 text-slate-muted">
+          <i class="bi bi-puzzle fs-1 text-emerald opacity-40 d-block mb-2"></i>
+          Canvas is empty. Click any block from the palette on the left to start building!
+        </div>
+      `;
+      return;
+    }
+
+    blockProgram.forEach((b, index) => {
+      const card = document.createElement("div");
+      card.className = `active-block-card block-${b.category || 'actions'}`;
+      card.setAttribute("data-id", b.id);
+
+      let innerControls = "";
+      if (b.type === 'event_start') {
+        innerControls = `<strong><i class="bi bi-flag-fill me-1"></i> When Program Starts</strong>`;
+      } else if (b.type === 'event_interval') {
+        innerControls = `<span>Every <input type="number" value="${b.interval || 1}" style="width: 60px;" onchange="updateBlockField('${b.id}', 'interval', this.value)"> Seconds:</span>`;
+      } else if (b.type === 'action_print') {
+        innerControls = `<span>Print <input type="text" value="${b.message || ''}" style="width: 220px;" oninput="updateBlockField('${b.id}', 'message', this.value)"></span>`;
+      } else if (b.type === 'action_alert') {
+        innerControls = `<span>Alert <input type="text" value="${b.alert_msg || ''}" style="width: 200px;" oninput="updateBlockField('${b.id}', 'alert_msg', this.value)"></span>`;
+      } else if (b.type === 'loop_repeat') {
+        innerControls = `<span>Repeat <input type="number" value="${b.times || 3}" style="width: 60px;" onchange="updateBlockField('${b.id}', 'times', this.value)"> Times</span>`;
+      } else if (b.type === 'logic_if') {
+        innerControls = `<span>If Condition <input type="text" value="${b.condition || 'x > 0'}" style="width: 150px;" oninput="updateBlockField('${b.id}', 'condition', this.value)"> Then</span>`;
+      } else if (b.type === 'var_set') {
+        innerControls = `<span>Set <input type="text" value="${b.var_name || 'x'}" style="width: 90px;" oninput="updateBlockField('${b.id}', 'var_name', this.value)"> = <input type="text" value="${b.var_val || '0'}" style="width: 80px;" oninput="updateBlockField('${b.id}', 'var_val', this.value)"></span>`;
+      } else if (b.type === 'var_change') {
+        innerControls = `<span>Change <input type="text" value="${b.var_name || 'x'}" style="width: 90px;" oninput="updateBlockField('${b.id}', 'var_name', this.value)"> by <input type="text" value="${b.delta || '1'}" style="width: 60px;" oninput="updateBlockField('${b.id}', 'delta', this.value)"></span>`;
+      } else if (b.type === 'sensor_read') {
+        innerControls = `<span>Read Sensor: <strong>${b.sensor_type || 'Temperature'}</strong></span>`;
+      } else if (b.type === 'ai_classify') {
+        innerControls = `<span>AI Model: <strong>${b.model || 'Sigmoid Classifier'}</strong></span>`;
+      }
+
+      card.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-xs opacity-75">${index + 1}.</span>
+          ${innerControls}
+        </div>
+        <div class="d-flex align-items-center gap-1">
+          <button class="btn btn-sm btn-link p-0 text-white opacity-60 hover-white" onclick="moveBlock(${index}, -1)" title="Move Up">▲</button>
+          <button class="btn btn-sm btn-link p-0 text-white opacity-60 hover-white" onclick="moveBlock(${index}, 1)" title="Move Down">▼</button>
+          <button class="btn btn-sm btn-link p-0 text-white opacity-60 hover-white ms-2" onclick="deleteBlock('${b.id}')" title="Delete Block">✕</button>
+        </div>
+      `;
+      canvas.appendChild(card);
+    });
+  }
+
+  function updateBlockField(blockId, field, val) {
+    const b = blockProgram.find(x => x.id === blockId);
+    if (b) {
+      b[field] = val;
+      saveActiveFile();
+    }
+  }
+
+  function moveBlock(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= blockProgram.length) return;
+    const temp = blockProgram[index];
+    blockProgram[index] = blockProgram[target];
+    blockProgram[target] = temp;
+    renderBlockCanvas();
+    saveActiveFile();
+  }
+
+  function deleteBlock(blockId) {
+    blockProgram = blockProgram.filter(b => b.id !== blockId);
+    renderBlockCanvas();
+    saveActiveFile();
+  }
+
+  function getBlocksJSON() {
+    return JSON.stringify(blockProgram, null, 2);
+  }
+
+  function compileBlocksToPython() {
+    let py = `# Auto-generated from Scratch / Block Canvas\n# Department of AI & ICT Virtual Lab Studio\n\nimport time, math\n\n`;
+    py += `print("🚀 Executing Visual Block Algorithm...")\n\n`;
+
+    blockProgram.forEach(b => {
+      if (b.type === 'action_print') {
+        py += `print(f"${b.message || ''}")\n`;
+      } else if (b.type === 'action_alert') {
+        py += `print(f"⚠️ SYSTEM ALERT: {b.alert_msg || ''}")\n`;
+      } else if (b.type === 'var_set') {
+        py += `${b.var_name || 'x'} = ${b.var_val || '0'}\n`;
+      } else if (b.type === 'var_change') {
+        py += `${b.var_name || 'x'} += ${b.delta || '1'}\n`;
+      } else if (b.type === 'loop_repeat') {
+        py += `for _ in range(${b.times || 3}):\n    print(f"  ↪ Repeating block cycle: {_ + 1}")\n`;
+      } else if (b.type === 'logic_if') {
+        py += `if ${b.condition || 'True'}:\n    print(f"  ✔ Condition '${b.condition}' satisfied.")\n`;
+      } else if (b.type === 'sensor_read') {
+        py += `sensor_reading = 28.6\nprint(f"📡 Telemetry Sensor Reading: {sensor_reading}°C")\n`;
+      } else if (b.type === 'ai_classify') {
+        py += `prob = 1.0 / (1.0 + math.exp(-2.4))\nprint(f"🧠 Neural Classifier Activation Probability: {prob:.4f}")\n`;
+      }
+    });
+
+    py += `\nprint("✅ Visual Block Program completed successfully.")\n`;
+    return py;
+  }
+
+  function switchBlockView(mode) {
+    activeBlockView = mode;
+    const btnCanvas = document.getElementById("btnViewCanvas");
+    const btnCode = document.getElementById("btnViewCompiled");
+    const blockStudio = document.getElementById("blockStudioContainer");
+    const textEditor = document.getElementById("textEditorContainer");
+
+    if (mode === 'canvas') {
+      btnCanvas.classList.add("active");
+      btnCode.classList.remove("active");
+      blockStudio.classList.remove("d-none");
+      textEditor.classList.add("d-none");
+    } else {
+      btnCanvas.classList.remove("active");
+      btnCode.classList.add("active");
+      blockStudio.classList.add("d-none");
+      textEditor.classList.remove("d-none");
+
+      const compiledPy = compileBlocksToPython();
+      if (codeEditorInstance) {
+        codeEditorInstance.setOption("mode", "python");
+        codeEditorInstance.setValue(compiledPy);
+        codeEditorInstance.refresh();
+      } else {
+        document.getElementById("codeEditorArea").value = compiledPy;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Keyboard Shortcuts & Handlers
+  // ---------------------------------------------------------------------------
+  function setupShortcuts() {
+    window.addEventListener("keydown", (e) => {
+      // Ctrl + S -> Save
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        saveActiveFile();
+      }
+      // Ctrl + Enter -> Run Code
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        executeActiveCode();
+      }
+    });
+  }
+
+  function setupExecutionHandlers() {
+    document.getElementById("btnSaveFile").addEventListener("click", saveActiveFile);
+    document.getElementById("btnRunCode").addEventListener("click", executeActiveCode);
+    
+    document.getElementById("btnClearTerminal").addEventListener("click", () => {
+      document.getElementById("terminalOutput").innerHTML = `<div class="text-slate-muted">Terminal cleared.</div>`;
+    });
+
+    document.getElementById("btnCopyTerminal").addEventListener("click", () => {
+      const text = document.getElementById("terminalOutput").innerText;
+      navigator.clipboard.writeText(text);
+      showStudioToast("Terminal output copied to clipboard!", "success");
+    });
+
+    document.getElementById("btnToggleBottomPanel").addEventListener("click", () => {
+      const panel = document.getElementById("ideBottomPanel");
+      panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    });
+
+    document.getElementById("btnCloseBottomPanel")?.addEventListener("click", () => {
+      document.getElementById("ideBottomPanel").style.display = "none";
+    });
+
+    let isExpanded = false;
+    document.getElementById("btnMaximizeTerminal")?.addEventListener("click", () => {
+      const panel = document.getElementById("ideBottomPanel");
+      isExpanded = !isExpanded;
+      panel.style.height = isExpanded ? "55vh" : "210px";
+      const icon = document.getElementById("iconExpandTerminal");
+      if (icon) icon.className = isExpanded ? "bi bi-arrows-collapse" : "bi bi-arrows-expand";
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Folder Selection, Navigation & Hierarchy Operations
+  // ---------------------------------------------------------------------------
+  function selectFolder(folderPath, folderId) {
+    currentSelectedFolder = folderPath || "/";
+
+    // Clear active highlight on all folders
+    document.querySelectorAll(".tree-folder-title").forEach(el => el.classList.remove("selected-folder"));
+
+    // Highlight target folder title
+    if (folderId) {
+      const el = document.getElementById("folderTitle_" + folderId);
+      if (el) el.classList.add("selected-folder");
+    } else if (folderPath && folderPath !== "/") {
+      const el = document.querySelector(`[data-folder-path="${folderPath}"]`);
+      if (el) el.classList.add("selected-folder");
+    }
+
+    // Update active folder bar in Project Explorer
+    const label = document.getElementById("activeFolderLabel");
+    if (label) {
+      label.textContent = folderPath === "/" ? "/ (Root)" : folderPath;
+    }
+    const clearBtn = document.getElementById("btnClearActiveFolder");
+    if (clearBtn) {
+      if (folderPath && folderPath !== "/") {
+        clearBtn.classList.remove("d-none");
+      } else {
+        clearBtn.classList.add("d-none");
+      }
+    }
+
+    // Pre-select target in file and folder modals
+    const fileFolderSelect = document.getElementById("newFileFolderPath");
+    if (fileFolderSelect) {
+      fileFolderSelect.value = folderPath;
+    }
+    const parentFolderSelect = document.getElementById("newFolderParentPath");
+    if (parentFolderSelect) {
+      parentFolderSelect.value = folderPath;
+    }
+  }
+
+  function clearSelectedFolder() {
+    selectFolder("/", null);
+  }
+
+  function toggleFolder(folderId) {
+    const children = document.getElementById("folderChildren_" + folderId);
+    const chevron = document.getElementById("chevron_" + folderId);
+    const icon = document.getElementById("folderIcon_" + folderId);
+
+    if (children) {
+      const isCollapsed = children.classList.toggle("collapsed");
+      if (chevron) {
+        chevron.classList.toggle("collapsed", isCollapsed);
+      }
+      if (icon) {
+        icon.className = isCollapsed ? "bi bi-folder text-amber folder-icon" : "bi bi-folder-fill text-amber folder-icon";
+      }
+    }
+  }
+
+  function openNewFileModalForFolder(folderPath) {
+    selectFolder(folderPath);
+    const modalEl = document.getElementById("newFileModal");
+    if (modalEl) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      setTimeout(() => document.getElementById("newFileName")?.focus(), 300);
+    }
+  }
+
+  function openNewFolderModalForParent(parentPath) {
+    selectFolder(parentPath);
+    const modalEl = document.getElementById("newFolderModal");
+    if (modalEl) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      setTimeout(() => document.getElementById("newFolderName")?.focus(), 300);
+    }
+  }
+
+  function openNewFileModal() {
+    const sel = document.getElementById("newFileFolderPath");
+    if (sel && currentSelectedFolder) sel.value = currentSelectedFolder;
+    const modalEl = document.getElementById("newFileModal");
+    if (modalEl) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      setTimeout(() => document.getElementById("newFileName")?.focus(), 300);
+    }
+  }
+
+  function openNewFolderModal() {
+    const sel = document.getElementById("newFolderParentPath");
+    if (sel && currentSelectedFolder) sel.value = currentSelectedFolder;
+    const modalEl = document.getElementById("newFolderModal");
+    if (modalEl) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      setTimeout(() => document.getElementById("newFolderName")?.focus(), 300);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // File & Folder Operations
+  // ---------------------------------------------------------------------------
+  function setupFileCreationHandlers() {
+    // New File
+    document.getElementById("newFileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("newFileName").value.trim();
+      const folder_path = document.getElementById("newFileFolderPath").value;
+
+      if (!name) return;
+
+      const res = await fetch("/virtual-lab/file/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: PROJECT_ID,
+          name: name,
+          folder_path: folder_path,
+          is_folder: 0,
+          content: name.endsWith('.py') ? "# " + name + "\n" : ""
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem("lastSelectedFolder", folder_path);
+        sessionStorage.setItem("lastOpenedFileName", name);
+        location.reload();
+      } else {
+        alert(data.error || "Failed to create file.");
+      }
+    });
+
+  // ---------------------------------------------------------------------------
+  // Studio Animated Dialog & Toast Notification System
+  // ---------------------------------------------------------------------------
+  let studioDialogResolver = null;
+
+  function showStudioToast(message, type = "info", duration = 3500) {
+    const container = document.getElementById("studioToastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `studio-toast toast-${type}`;
+    
+    let iconClass = "bi-info-circle-fill text-cyan";
+    if (type === "success") iconClass = "bi-check-circle-fill text-emerald";
+    if (type === "error") iconClass = "bi-exclamation-triangle-fill text-danger";
+
+    toast.innerHTML = `
+      <i class="bi ${iconClass} fs-6 flex-shrink-0"></i>
+      <span class="flex-grow-1">${message}</span>
+      <button class="btn btn-sm btn-link p-0 text-slate-muted hover-white ms-1 text-decoration-none" onclick="this.parentElement.remove()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(20px)";
+      setTimeout(() => toast.remove(), 250);
+    }, duration);
+  }
+
+  function studioDialogClose(result) {
+    const overlay = document.getElementById("studioDialogOverlay");
+    const card = document.getElementById("studioDialogCard");
+    if (!overlay || !card) return;
+
+    card.classList.add("closing");
+    overlay.classList.remove("active");
+
+    setTimeout(() => {
+      overlay.style.display = "none";
+      card.classList.remove("closing");
+      if (typeof studioDialogResolver === "function") {
+        studioDialogResolver(result);
+        studioDialogResolver = null;
+      }
+    }, 220);
+  }
+
+  function showStudioConfirm({
+    title = "Confirm Action",
+    message = "Are you sure you want to proceed?",
+    itemName = "",
+    itemType = "Item",
+    isFolder = false,
+    confirmText = "Confirm",
+    confirmVariant = "danger",
+    icon = "bi-trash3-fill",
+    warningText = "This action is permanent and cannot be undone."
+  }) {
+    return new Promise((resolve) => {
+      studioDialogResolver = resolve;
+
+      const overlay = document.getElementById("studioDialogOverlay");
+      const card = document.getElementById("studioDialogCard");
+      const glow = document.getElementById("studioDialogGlow");
+      const iconCircle = document.getElementById("studioDialogIconCircle");
+      const iconRipple = document.getElementById("studioDialogIconRipple");
+      const iconEl = document.getElementById("studioDialogIcon");
+      const titleEl = document.getElementById("studioDialogTitle");
+      const msgEl = document.getElementById("studioDialogMessage");
+      const chipEl = document.getElementById("studioDialogItemChip");
+      const itemIcon = document.getElementById("studioDialogItemIcon");
+      const itemNameEl = document.getElementById("studioDialogItemName");
+      const itemTypeEl = document.getElementById("studioDialogItemType");
+      const calloutEl = document.getElementById("studioDialogCallout");
+      const calloutText = document.getElementById("studioDialogCalloutText");
+      const promptField = document.getElementById("studioDialogPromptField");
+      const confirmBtn = document.getElementById("btnStudioDialogConfirm");
+      const confirmLabel = document.getElementById("btnStudioDialogLabel");
+      const confirmIcon = document.getElementById("btnStudioDialogIcon");
+
+      // Reset state & set content
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      itemNameEl.textContent = itemName;
+      itemTypeEl.textContent = isFolder ? "Folder" : (itemType === "project" ? "Project" : "File");
+
+      if (isFolder) {
+        itemIcon.className = "bi bi-folder-fill text-amber";
+      } else if (itemType === "project") {
+        itemIcon.className = "bi bi-code-square text-cyan";
+      } else {
+        itemIcon.className = "bi bi-file-earmark-code text-cyan";
+      }
+
+      calloutText.textContent = warningText;
+      calloutEl.classList.remove("d-none");
+      chipEl.classList.remove("d-none");
+      promptField.classList.add("d-none");
+
+      // Styling variants
+      if (confirmVariant === "danger") {
+        glow.className = "studio-dialog-glow";
+        iconCircle.className = "studio-dialog-icon-circle";
+        iconRipple.className = "studio-dialog-icon-ripple";
+        iconEl.className = `bi ${icon}`;
+        calloutEl.className = "studio-dialog-callout";
+        confirmBtn.className = "btn btn-dialog-action btn-action-danger";
+        confirmIcon.className = "bi bi-trash3-fill me-1.5";
+      } else {
+        glow.className = "studio-dialog-glow cyan-glow";
+        iconCircle.className = "studio-dialog-icon-circle icon-cyan";
+        iconRipple.className = "studio-dialog-icon-ripple ripple-cyan";
+        iconEl.className = `bi ${icon}`;
+        calloutEl.className = "studio-dialog-callout callout-cyan";
+        confirmBtn.className = "btn btn-dialog-action btn-action-cyan";
+        confirmIcon.className = "bi bi-check2-circle me-1.5";
+      }
+
+      confirmBtn.disabled = false;
+      confirmLabel.textContent = confirmText;
+
+      confirmBtn.onclick = () => {
+        confirmBtn.disabled = true;
+        confirmLabel.innerHTML = `<span class="spinner-border spinner-border-sm me-1.5" role="status"></span> Processing...`;
+        studioDialogClose(true);
+      };
+
+      // Show overlay with spring animation
+      overlay.style.display = "flex";
+      requestAnimationFrame(() => {
+        overlay.classList.add("active");
+        confirmBtn.focus();
+      });
+    });
+  }
+
+  function showStudioPrompt({
+    title = "Rename Item",
+    message = "Enter a new name:",
+    currentValue = "",
+    placeholder = "e.g. main.py",
+    confirmText = "Save Name"
+  }) {
+    return new Promise((resolve) => {
+      studioDialogResolver = resolve;
+
+      const overlay = document.getElementById("studioDialogOverlay");
+      const glow = document.getElementById("studioDialogGlow");
+      const iconCircle = document.getElementById("studioDialogIconCircle");
+      const iconRipple = document.getElementById("studioDialogIconRipple");
+      const iconEl = document.getElementById("studioDialogIcon");
+      const titleEl = document.getElementById("studioDialogTitle");
+      const msgEl = document.getElementById("studioDialogMessage");
+      const chipEl = document.getElementById("studioDialogItemChip");
+      const calloutEl = document.getElementById("studioDialogCallout");
+      const promptField = document.getElementById("studioDialogPromptField");
+      const promptInput = document.getElementById("studioDialogPromptInput");
+      const promptError = document.getElementById("studioDialogPromptError");
+      const confirmBtn = document.getElementById("btnStudioDialogConfirm");
+      const confirmLabel = document.getElementById("btnStudioDialogLabel");
+      const confirmIcon = document.getElementById("btnStudioDialogIcon");
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      chipEl.classList.add("d-none");
+      calloutEl.classList.add("d-none");
+      promptField.classList.remove("d-none");
+      promptError.classList.add("d-none");
+
+      promptInput.value = currentValue;
+      promptInput.placeholder = placeholder;
+
+      glow.className = "studio-dialog-glow cyan-glow";
+      iconCircle.className = "studio-dialog-icon-circle icon-cyan";
+      iconRipple.className = "studio-dialog-icon-ripple ripple-cyan";
+      iconEl.className = "bi bi-pencil-square";
+      confirmBtn.className = "btn btn-dialog-action btn-action-cyan";
+      confirmIcon.className = "bi bi-check-lg me-1.5";
+      confirmBtn.disabled = false;
+      confirmLabel.textContent = confirmText;
+
+      const submitPrompt = () => {
+        const val = promptInput.value.trim();
+        if (!val) {
+          promptError.textContent = "Name cannot be empty.";
+          promptError.classList.remove("d-none");
+          promptInput.focus();
+          return;
+        }
+        confirmBtn.disabled = true;
+        confirmLabel.innerHTML = `<span class="spinner-border spinner-border-sm me-1.5" role="status"></span> Saving...`;
+        studioDialogClose(val);
+      };
+
+      confirmBtn.onclick = submitPrompt;
+      promptInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          submitPrompt();
+        } else if (e.key === "Escape") {
+          studioDialogClose(null);
+        }
+      };
+
+      overlay.style.display = "flex";
+      requestAnimationFrame(() => {
+        overlay.classList.add("active");
+        promptInput.focus();
+        promptInput.select();
+      });
+    });
+  }
+
+  // Global Dialog Keydown listener for Escape
+  window.addEventListener("keydown", (e) => {
+    const overlay = document.getElementById("studioDialogOverlay");
+    if (overlay && overlay.classList.contains("active") && e.key === "Escape") {
+      studioDialogClose(false);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // File & Folder Operations (Equipped with Modern Animated Dialogs)
+  // ---------------------------------------------------------------------------
+  function setupFileCreationHandlers() {
+    // New File
+    document.getElementById("newFileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("newFileName").value.trim();
+      const folder_path = document.getElementById("newFileFolderPath").value;
+
+      if (!name) return;
+
+      const res = await fetch("/virtual-lab/file/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: PROJECT_ID,
+          name: name,
+          folder_path: folder_path,
+          is_folder: 0,
+          content: name.endsWith('.py') ? "# " + name + "\n" : ""
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem("lastSelectedFolder", folder_path);
+        sessionStorage.setItem("lastOpenedFileName", name);
+        location.reload();
+      } else {
+        showStudioToast(data.error || "Failed to create file.", "error");
+      }
+    });
+
+    // New Folder (supports parent folder hierarchy / next level)
+    document.getElementById("newFolderForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("newFolderName").value.trim();
+      const parentPath = document.getElementById("newFolderParentPath") ? document.getElementById("newFolderParentPath").value.trim() : "/";
+
+      if (!name) return;
+
+      const res = await fetch("/virtual-lab/file/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: PROJECT_ID,
+          name: name,
+          folder_path: parentPath || "/",
+          is_folder: 1
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const fullNewFolderPath = (parentPath === '/' ? '' : parentPath) + '/' + name;
+        sessionStorage.setItem("lastSelectedFolder", fullNewFolderPath);
+        location.reload();
+      } else {
+        showStudioToast(data.error || "Failed to create folder.", "error");
+      }
+    });
+  }
+
+  async function promptRenameItem(fileId, currentName) {
+    const newName = await showStudioPrompt({
+      title: "Rename Item",
+      message: "Enter a new name for this file or folder:",
+      currentValue: currentName,
+      placeholder: "e.g. " + currentName,
+      confirmText: "Save Name"
+    });
+
+    if (!newName || newName === currentName) return;
+
+    try {
+      const res = await fetch("/virtual-lab/file/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: fileId, new_name: newName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        showStudioToast(data.error || "Failed to rename.", "error");
+      }
+    } catch (err) {
+      showStudioToast("Network error while renaming item.", "error");
+    }
+  }
+
+  async function confirmDeleteItem(fileId, name, isFolder) {
+    const itemType = isFolder ? "Folder" : "File";
+    const confirmed = await showStudioConfirm({
+      title: isFolder ? "Delete Folder?" : "Delete File?",
+      message: isFolder 
+        ? "Are you sure you want to delete this folder and all its contents?" 
+        : "Are you sure you want to delete this file?",
+      itemName: name,
+      itemType: itemType,
+      isFolder: isFolder,
+      confirmText: isFolder ? "Delete Folder" : "Delete File",
+      confirmVariant: "danger",
+      icon: isFolder ? "bi-folder-x" : "bi-trash3-fill",
+      warningText: isFolder 
+        ? "All nested files and code inside this folder will be permanently deleted from the lab workspace." 
+        : "This file and all its unsaved changes will be permanently removed."
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch("/virtual-lab/file/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: fileId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Clean active folder if deleted folder was selected
+        const lastSelected = sessionStorage.getItem("lastSelectedFolder");
+        if (lastSelected && lastSelected.includes(name)) {
+          sessionStorage.removeItem("lastSelectedFolder");
+        }
+        location.reload();
+      } else {
+        showStudioToast(data.error || "Failed to delete.", "error");
+      }
+    } catch (err) {
+      showStudioToast("Network error while deleting item.", "error");
+    }
+  }
+
+  async function confirmDeleteProject(projId, title) {
+    const confirmed = await showStudioConfirm({
+      title: "Delete Project?",
+      message: "Are you sure you want to permanently delete this entire project?",
+      itemName: title,
+      itemType: "project",
+      confirmText: "Delete Project",
+      confirmVariant: "danger",
+      icon: "bi-trash3-fill",
+      warningText: "All source files, terminal outputs, evaluation records, and student work will be permanently destroyed."
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/virtual-lab/project/${projId}/delete`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        location.href = "/virtual-lab";
+      } else {
+        showStudioToast(data.error || "Failed to delete project.", "error");
+      }
+    } catch (err) {
+      showStudioToast("Network error while deleting project.", "error");
+    }
+  }
+</script>
+{% endblock %}

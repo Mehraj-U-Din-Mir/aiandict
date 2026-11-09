@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Search Results for "{{ query }}" — AI & ICT Department{% endblock %}
+
+{% block body %}
+<div class="container my-2 my-md-3 py-1">
+
+  <div class="glass-panel p-3 mb-3">
+    <h4 class="fw-bold text-white brand-font mb-1">
+      Search Results for <span class="text-gradient-cyan">"{{ query }}"</span>
+    </h4>
+    <p class="text-slate-muted small mb-0">Department news, activities, approved projects, and faculty directory matches.</p>
+  </div>
+
+  {% if news or activities or projects or faculty %}
+    <div class="row g-3">
+      <!-- Projects -->
+      {% for p in projects %}
+        <div class="col-md-6">
+          <div class="glass-panel p-3 h-100">
+            <span class="badge bg-primary bg-opacity-20 text-cyan mb-2">Project &bull; {{ p.category }}</span>
+            <h5 class="fw-bold text-white mb-2">{{ p.title }}</h5>
+            <p class="text-slate-muted small mb-3">{{ p.abstract[:150] }}...</p>
+            <a href="{{ url_for('projects_showcase') }}" class="btn btn-outline-cyan btn-sm">View in Project Gallery &rarr;</a>
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- Activities -->
+      {% for a in activities %}
+        <div class="col-md-6">
+          <div class="glass-panel p-4 h-100">
+            <span class="badge bg-success bg-opacity-20 text-emerald mb-2">Activity Event</span>
+            <h5 class="fw-bold text-white mb-2">{{ a.title }}</h5>
+            <p class="text-slate-muted small mb-3">{{ a.description[:150] }}...</p>
+            <a href="{{ url_for('activities') }}" class="btn btn-glass btn-sm">Explore Event &rarr;</a>
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- News -->
+      {% for n in news %}
+        <div class="col-md-6">
+          <div class="glass-panel p-4 h-100">
+            <span class="badge bg-info text-dark mb-2">Announcement</span>
+            <h5 class="fw-bold text-white mb-2">{{ n.title }}</h5>
+            <p class="text-slate-muted small mb-0">{{ n.description }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="glass-panel p-5 text-center text-slate-muted">
+      <i class="bi bi-search fs-1 text-cyan opacity-40 d-block mb-3"></i>
+      <h4 class="text-white fw-bold">No results found for "{{ query }}"</h4>
+      <p class="small mx-auto mb-3" style="max-width: 450px;">Try searching for projects, faculty names, workshops, or hackathons.</p>
+      <a href="{{ url_for('index') }}" class="btn-primary-glow btn-sm">Back to Home</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

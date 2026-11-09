@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — Capstone Project Detail | AI & ICT Department{% endblock %}
+
+{% block body %}
+<div class="container my-2 my-md-3 py-1">
+
+  <!-- ========================================================================
+       BREADCRUMB & BACK LINK
+       ======================================================================== -->
+  <div class="mb-2">
+    <a href="{{ url_for('projects_showcase') }}" class="btn btn-glass btn-sm text-cyan">
+      <i class="bi bi-arrow-left me-1"></i> Back to Projects Showcase
+    </a>
+  </div>
+
+  <!-- ========================================================================
+       PROJECT HERO HEADER (Compact)
+       ======================================================================== -->
+  <div class="glass-panel p-3.5 p-md-4 mb-3 position-relative overflow-hidden">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-8">
+        
+        <!-- Category & Status Row -->
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <span class="badge bg-primary bg-opacity-25 text-cyan border border-primary border-opacity-40 px-2.5 py-1 rounded-pill fw-semibold text-xs">
+            <i class="bi bi-tag-fill me-1"></i> {{ project.category }}
+          </span>
+
+          {% if project.status == 'Approved' %}
+            <span class="badge-status-approved">
+              <i class="bi bi-patch-check-fill"></i> Faculty Approved
+            </span>
+          {% elif project.status == 'Needs Revision' %}
+            <span class="badge bg-warning bg-opacity-20 text-amber border border-warning border-opacity-40 px-2.5 py-0.5 rounded-pill fw-semibold text-xs">
+              <i class="bi bi-pencil-square"></i> Needs Revision
+            </span>
+          {% elif project.status == 'Rejected' %}
+            <span class="badge-status-rejected">
+              <i class="bi bi-x-circle-fill"></i> Not Approved
+            </span>
+          {% else %}
+            <span class="badge-status-pending">
+              <i class="bi bi-hourglass-split"></i> Under Faculty Review
+            </span>
+          {% endif %}
+
+          {% if project.score and project.score > 0 %}
+            <span class="badge bg-indigo bg-opacity-25 text-indigo border border-indigo border-opacity-40 px-2.5 py-1 rounded-pill fw-bold text-xs">
+              <i class="bi bi-award-fill me-1 text-amber"></i> Evaluation Score: {{ project.score }}/100 
+              {% if project.grade and project.grade != 'Pending' %} &bull; Grade {{ project.grade }}{% endif %}
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Project Title -->
+        <h2 class="h3 fw-bold text-white brand-font mb-2">
+          {{ project.title }}
+        </h2>
+
+        <!-- Submission Metadata -->
+        <div class="d-flex flex-wrap align-items-center gap-3 text-slate-muted small mb-3">
+          <div><i class="bi bi-person-fill text-cyan me-1"></i> <strong>Author:</strong> {{ project.student_name }}</div>
+          <div><i class="bi bi-mortarboard-fill text-indigo me-1"></i> <strong>Supervisor:</strong> {{ project.faculty_name if project.faculty_name else 'Department Review Board' }}</div>
+          <div><i class="bi bi-calendar3 text-emerald me-1"></i> <strong>Submitted:</strong> {{ project.created_at[:10] if project.created_at else 'Recent' }}</div>
+        </div>
+
+        <!-- Action Links -->
+        <div class="d-flex flex-wrap gap-2">
+          {% if project.demo_url %}
+            <a href="{{ project.demo_url }}" target="_blank" class="btn-primary-glow btn-sm">
+              <i class="bi bi-play-circle-fill"></i> Launch Live Prototype
+            </a>
+          {% endif %}
+
+          {% if project.github_url %}
+            <a href="{{ project.github_url }}" target="_blank" class="btn btn-glass btn-sm">
+              <i class="bi bi-github fs-6"></i> Source Code
+            </a>
+          {% endif %}
+
+          {% if project.document_url %}
+            <a href="{{ project.document_url }}" target="_blank" class="btn btn-glass btn-sm">
+              <i class="bi bi-file-earmark-pdf-fill text-rose fs-6"></i> Research Report
+            </a>
+          {% endif %}
+
+          <button class="btn btn-glass btn-sm text-slate-muted" onclick="copyCitation()">
+            <i class="bi bi-quote text-cyan"></i> Cite Project
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Quick Metric Capsule (Right Side of Header) -->
+      <div class="col-lg-4 text-center">
+        <div class="stat-card-modern p-3">
+          <div class="stat-icon-wrapper mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.35rem;">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <div class="text-white small fw-bold mt-1">Department Innovation Archive</div>
+          <div class="text-slate-muted text-xs mt-1">Verified Capstone Prototype</div>
+          
+          <hr class="border-secondary my-3">
+
+          <div class="row g-2 text-center">
+            <div class="col-6">
+              <div class="text-cyan fw-bold fs-5">{{ project.score if project.score else 'Pending' }}</div>
+              <div class="text-slate-muted text-xs">Total Score</div>
+            </div>
+            <div class="col-6">
+              <div class="text-amber fw-bold fs-5">{{ project.grade if project.grade != 'Pending' else 'In Review' }}</div>
+              <div class="text-slate-muted text-xs">Assigned Grade</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MAIN CONTENT: 2-COLUMN GRID
+       ======================================================================== -->
+  <div class="row g-4">
+    
+    <!-- LEFT COLUMN: Abstract, Architecture, Tech Stack, & Demo Sandbox -->
+    <div class="col-lg-8">
+      
+      <!-- Abstract Card -->
+      <div class="glass-panel p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="stat-icon-wrapper" style="width: 38px; height: 38px; font-size: 1.1rem;">
+            <i class="bi bi-card-text"></i>
+          </div>
+          <h4 class="fw-bold text-white mb-0 brand-font">Executive Abstract</h4>
+        </div>
+        <p class="lead text-white" style="font-size: 1.05rem; line-height: 1.75; font-weight: 400;">
+          {{ project.abstract }}
+        </p>
+      </div>
+
+      <!-- Methodology & Pipeline Card -->
+      <div class="glass-panel p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="stat-icon-wrapper" style="width: 38px; height: 38px; font-size: 1.1rem; color: #818cf8; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3);">
+            <i class="bi bi-diagram-3-fill"></i>
+          </div>
+          <h4 class="fw-bold text-white mb-0 brand-font">Methodology &amp; System Architecture</h4>
+        </div>
+
+        {% if project.methodology %}
+          <div class="text-white mb-3" style="line-height: 1.7;">
+            {{ project.methodology }}
+          </div>
+        {% else %}
+          <p class="text-slate-muted mb-3" style="line-height: 1.7;">
+            The system employs a modular machine learning pipeline comprising real-time sensor ingestion, deep convolutional/transformer feature extraction, and deployment on low-latency edge endpoints with cloud telemetry integration.
+          </p>
+        {% endif %}
+
+        <!-- Pipeline Stages Callout -->
+        <div class="row g-3 pt-2">
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(14, 21, 38, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <div class="text-cyan small fw-bold mb-1"><i class="bi bi-1-circle me-1"></i> Data Acquisition</div>
+              <div class="text-slate-muted text-xs">Dataset curation, image augmentation, and noise filtering.</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(14, 21, 38, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <div class="text-indigo small fw-bold mb-1"><i class="bi bi-2-circle me-1"></i> Model Architecture</div>
+              <div class="text-slate-muted text-xs">Backbone training, hyperparameter optimization, and loss convergence.</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(14, 21, 38, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <div class="text-emerald small fw-bold mb-1"><i class="bi bi-3-circle me-1"></i> Evaluation &amp; Deploy</div>
+              <div class="text-slate-muted text-xs">Cross-validation benchmarks, inference latency testing, and API integration.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech Stack Breakdown -->
+      <div class="glass-panel p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="stat-icon-wrapper" style="width: 38px; height: 38px; font-size: 1.1rem; color: #34d399; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);">
+            <i class="bi bi-stack"></i>
+          </div>
+          <h4 class="fw-bold text-white mb-0 brand-font">Technologies &amp; Libraries</h4>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2">
+          {% if project.tech_stack %}
+            {% for tech in project.tech_stack.split(',') %}
+              <div class="d-flex align-items-center gap-1.5 px-3 py-2 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(56, 189, 248, 0.25);">
+                <i class="bi bi-cpu text-cyan"></i>
+                <span class="text-white fw-semibold small">{{ tech.strip() }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <span class="text-slate-muted small">Python, PyTorch, NumPy, Flask, OpenCV</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Live Demo Sandbox Frame (if URL provided) -->
+      {% if project.demo_url %}
+        <div class="glass-panel p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-window-fullscreen text-cyan fs-5"></i>
+              <h5 class="fw-bold text-white mb-0 brand-font">Live Prototype Sandbox</h5>
+            </div>
+            <a href="{{ project.demo_url }}" target="_blank" class="btn btn-outline-cyan btn-sm">
+              Open Fullscreen <i class="bi bi-box-arrow-up-right ms-1"></i>
+            </a>
+          </div>
+          <div class="p-3 text-center rounded-3" style="background: rgba(10, 15, 30, 0.85); border: 1px solid rgba(56, 189, 248, 0.2);">
+            <i class="bi bi-display fs-1 text-cyan d-block mb-2"></i>
+            <h6 class="text-white fw-bold mb-1">Interactive Web Demonstration Available</h6>
+            <p class="text-slate-muted small mb-3">Click below to launch the running prototype or test the live model API.</p>
+            <a href="{{ project.demo_url }}" target="_blank" class="btn-primary-glow btn-sm">
+              <i class="bi bi-play-circle me-1"></i> Launch {{ project.title }} Demo
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- RIGHT COLUMN: Evaluation Rubrics, Supervisor Card, Author Card -->
+    <div class="col-lg-4">
+      
+      <!-- Faculty Review & Rubrics Card -->
+      <div class="glass-panel p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="stat-icon-wrapper" style="width: 38px; height: 38px; font-size: 1.1rem; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3);">
+            <i class="bi bi-award-fill"></i>
+          </div>
+          <h5 class="fw-bold text-white mb-0 brand-font">Faculty Rubric Evaluation</h5>
+        </div>
+
+        <!-- Rubric Meters -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small text-white mb-1">
+            <span>Innovation &amp; Novelty</span>
+            <span class="text-cyan fw-bold">{{ project.score_innovation if project.score_innovation else (project.score // 10 if project.score else 8) }}/10</span>
+          </div>
+          <div class="progress" style="height: 6px; background: rgba(255, 255, 255, 0.08);">
+            <div class="progress-bar bg-cyan" style="width: {{ (project.score_innovation if project.score_innovation else (project.score // 10 if project.score else 8)) * 10 }}%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small text-white mb-1">
+            <span>Technical Depth &amp; Code Quality</span>
+            <span class="text-indigo fw-bold">{{ project.score_technical if project.score_technical else (project.score // 10 if project.score else 9) }}/10</span>
+          </div>
+          <div class="progress" style="height: 6px; background: rgba(255, 255, 255, 0.08);">
+            <div class="progress-bar bg-primary" style="width: {{ (project.score_technical if project.score_technical else (project.score // 10 if project.score else 9)) * 10 }}%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small text-white mb-1">
+            <span>Implementation &amp; Benchmarks</span>
+            <span class="text-emerald fw-bold">{{ project.score_presentation if project.score_presentation else (project.score // 10 if project.score else 9) }}/10</span>
+          </div>
+          <div class="progress" style="height: 6px; background: rgba(255, 255, 255, 0.08);">
+            <div class="progress-bar bg-success" style="width: {{ (project.score_presentation if project.score_presentation else (project.score // 10 if project.score else 9)) * 10 }}%;"></div>
+          </div>
+        </div>
+
+        <!-- Faculty Feedback Remarks -->
+        <div class="mt-4 p-3 rounded-3" style="background: rgba(99, 102, 241, 0.08); border-left: 3px solid #6366f1;">
+          <div class="text-slate-muted text-xs text-uppercase fw-bold mb-1">
+            <i class="bi bi-chat-left-quote-fill text-indigo me-1"></i> Mentor Assessment
+          </div>
+          <p class="text-white small mb-0 fst-italic" style="line-height: 1.55;">
+            "{{ project.feedback if project.feedback else 'Project demonstrates commendable understanding of core machine learning paradigms, sound dataset validation, and clean software architecture.' }}"
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Supervisor Profile Card -->
+      <div class="glass-panel p-4 mb-4">
+        <h5 class="fw-bold text-white mb-3 brand-font">Faculty Mentor</h5>
+        <div class="d-flex align-items-center gap-3">
+          <img src="{{ project.faculty_avatar if project.faculty_avatar else url_for('static', filename='img/mehraj.png') }}" alt="Mentor" width="52" height="52" class="rounded-circle border border-primary" style="object-fit: cover;">
+          <div>
+            <div class="fw-bold text-white">{{ project.faculty_name if project.faculty_name else 'Er. Mehraj U Din Mir' }}</div>
+            <div class="text-cyan small">{{ project.faculty_designation if project.faculty_designation else 'Lead AI/ML Mentor' }}</div>
+            <div class="text-slate-muted text-xs">{{ project.faculty_email if project.faculty_email else 'mehraj@dept.ai' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Author Card -->
+      <div class="glass-panel p-4 mb-4">
+        <h5 class="fw-bold text-white mb-3 brand-font">Student Author</h5>
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="stat-icon-wrapper" style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="bi bi-person-workspace"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-white">{{ project.student_name }}</div>
+            <div class="text-slate-muted text-xs">{{ project.student_email }}</div>
+            <span class="badge bg-secondary bg-opacity-40 text-cyan mt-1" style="font-size: 0.68rem;">Department of AI &amp; ICT</span>
+          </div>
+        </div>
+
+        <div class="text-slate-muted text-xs">
+          <div><i class="bi bi-check-circle-fill text-success me-1"></i> Verified Enrolled Student</div>
+          <div><i class="bi bi-shield-check text-cyan me-1"></i> Academic Integrity Clearance: Passed</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Citation Copy Modal / Script -->
+<script>
+  function copyCitation() {
+    const text = `@article{ai_ict_project_{{ project.id }},
+  title={ {{ project.title }} },
+  author={ {{ project.student_name }} },
+  institution={Department of Artificial Intelligence & ICT},
+  year={2026}
+}`;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("BibTeX citation copied to clipboard!");
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,1101 @@
+{% extends "base.html" %}
+{% block title %}Faculty Command Center — AI & ICT Department{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-3 px-xl-4 my-2 my-md-2.5">
+
+  <!-- ========================================================================
+       FACULTY EXECUTIVE COMMAND & METRICS RIBBON (Above-the-Fold)
+       ======================================================================== -->
+  <div class="glass-panel p-2.5 p-md-3 mb-2 shadow-xl">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <!-- Left: Identity & Badges -->
+      <div class="d-flex align-items-center gap-2.5">
+        <div class="stat-icon-wrapper" style="width: 40px; height: 40px; font-size: 1.25rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">
+          <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-white mb-0 brand-font fs-5">{{ session['user']['name'] }}</h4>
+            <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30 px-2.5 py-0.5 rounded-pill small">
+              Faculty Portal
+            </span>
+          </div>
+          <div class="text-slate-muted small" style="font-size: 0.75rem;">
+            <span><i class="bi bi-envelope me-1"></i> {{ session['user']['email'] }}</span> &bull;
+            <span class="text-indigo">{{ session['user']['designation'] if session['user']['designation'] else 'Faculty Mentor' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Inline Metric Pills & CTAs -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-1.5 me-1">
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-amber py-1.5 px-2 text-xs">
+            <i class="bi bi-hourglass-split me-1"></i> Pending: <strong>{{ stats.pending_projects }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-cyan py-1.5 px-2 text-xs">
+            <i class="bi bi-folder-check me-1"></i> Supervised: <strong>{{ stats.supervised_projects }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-indigo py-1.5 px-2 text-xs">
+            <i class="bi bi-chat-left-dots-fill me-1"></i> Messages: <strong>{{ stats.messages_posted }}</strong>
+          </span>
+          <span class="badge bg-dark bg-opacity-60 border border-secondary text-white py-1.5 px-2 text-xs">
+            <i class="bi bi-people-fill me-1 text-emerald"></i> Students: <strong>{{ stats.total_students }}</strong>
+          </span>
+        </div>
+
+        <button class="btn btn-secondary-glow btn-sm py-1 px-2.5" onclick="document.getElementById('pills-msg-tab').click();">
+          <i class="bi bi-megaphone-fill me-1"></i> Post Notice
+        </button>
+        <button class="btn btn-primary-glow btn-sm py-1 px-2.5" onclick="document.getElementById('pills-students-tab').click();">
+          <i class="bi bi-person-plus-fill me-1"></i> Onboard Student
+        </button>
+        <a href="{{ url_for('logout') }}" class="btn btn-glass btn-sm py-1 px-2.5 text-danger">
+          <i class="bi bi-box-arrow-right"></i> Sign Out
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       TABS NAVIGATION
+       ======================================================================== -->
+  <div class="mb-2">
+    <ul class="nav nav-pills-modern" id="facultyTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pills-projects-tab" data-bs-toggle="pill" data-bs-target="#tab-projects" type="button" role="tab">
+          <i class="bi bi-check2-square me-1.5 text-cyan"></i> Project Submissions ({{ assigned_projects|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-msg-tab" data-bs-toggle="pill" data-bs-target="#tab-messages" type="button" role="tab">
+          <i class="bi bi-chat-left-dots-fill me-1.5 text-amber"></i> Message Corner Notices ({{ my_messages|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-students-tab" data-bs-toggle="pill" data-bs-target="#tab-students" type="button" role="tab">
+          <i class="bi bi-people-fill me-1.5 text-emerald"></i> Onboard & Manage Students ({{ students|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-club-tab" data-bs-toggle="pill" data-bs-target="#tab-club" type="button" role="tab">
+          <i class="bi bi-cpu me-1.5 text-pink"></i> AI Skill Club Registry ({{ club_members|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-certs-tab" data-bs-toggle="pill" data-bs-target="#tab-certificates" type="button" role="tab">
+          <i class="bi bi-patch-check-fill me-1.5 text-cyan"></i> Certificate Proofs ({{ participations|length }})
+          {% if stats.pending_participations > 0 %}
+            <span class="badge bg-amber text-dark rounded-pill ms-1" style="font-size: 0.65rem;">{{ stats.pending_participations }}</span>
+          {% endif %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-lab-tab" data-bs-toggle="pill" data-bs-target="#tab-lab-submissions" type="button" role="tab">
+          <i class="bi bi-terminal-fill me-1.5 text-cyan"></i> Virtual Lab Submissions ({{ lab_submissions|length }})
+          {% if stats.pending_lab_submissions_count > 0 %}
+            <span class="badge bg-cyan text-dark rounded-pill ms-1" style="font-size: 0.65rem;">{{ stats.pending_lab_submissions_count }} New</span>
+          {% endif %}
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ========================================================================
+       TAB CONTENTS
+       ======================================================================== -->
+  <div class="tab-content" id="facultyTabsContent">
+
+    <!-- 1. PROJECT SUBMISSIONS & APPROVALS TAB -->
+    <div class="tab-pane fade show active" id="tab-projects" role="tabpanel">
+      <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold text-white mb-1">Student Project Proposals & Capstone Reviews</h4>
+            <p class="text-slate-muted small mb-0">Evaluate student methodologies, assign scores, approve projects, or provide revision feedback.</p>
+          </div>
+        </div>
+
+        {% if assigned_projects %}
+          <div class="row g-4">
+            {% for p in assigned_projects %}
+              <div class="col-lg-6">
+                <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between border-secondary">
+                  <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="badge bg-primary bg-opacity-20 text-cyan">{{ p.category }}</span>
+                      <div>
+                        {% if p.status == 'Approved' %}
+                          <span class="badge-status-approved"><i class="bi bi-check-circle-fill"></i> Approved</span>
+                        {% elif p.status == 'Needs Revision' %}
+                          <span class="badge-status-review"><i class="bi bi-pencil-square"></i> Needs Revision</span>
+                        {% elif p.status == 'Rejected' %}
+                          <span class="badge-status-rejected"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+                        {% else %}
+                          <span class="badge-status-pending"><i class="bi bi-hourglass-split"></i> Pending Review</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-1">{{ p.title }}</h5>
+                    <div class="text-cyan small mb-2">
+                      <i class="bi bi-person me-1"></i> Student: <strong>{{ p.student_name }}</strong> ({{ p.student_email }})
+                    </div>
+                    <p class="text-slate-muted small mb-3">{{ p.abstract }}</p>
+
+                    {% if p.tech_stack %}
+                      <div class="d-flex flex-wrap gap-1 mb-3">
+                        {% for tech in p.tech_stack.split(',') %}
+                          <span class="tech-tag">{{ tech.strip() }}</span>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+
+                    <!-- Project Resources -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      <a href="{{ url_for('project_detail', project_id=p.id) }}" target="_blank" class="btn btn-outline-cyan btn-sm">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Blueprint
+                      </a>
+                      {% if p.github_url %}
+                        <a href="{{ p.github_url }}" target="_blank" class="btn btn-glass btn-sm">
+                          <i class="bi bi-github me-1"></i> Repo
+                        </a>
+                      {% endif %}
+                      {% if p.demo_url %}
+                        <a href="{{ p.demo_url }}" target="_blank" class="btn btn-glass btn-sm">
+                          <i class="bi bi-play-circle me-1"></i> Demo
+                        </a>
+                      {% endif %}
+                      {% if p.document_url %}
+                        <a href="{{ p.document_url }}" target="_blank" class="btn btn-glass btn-sm">
+                          <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                        </a>
+                      {% endif %}
+                    </div>
+
+                    <!-- Rubric Grade Summary Pill -->
+                    <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 mb-3">
+                      <div>
+                        <span class="text-slate-muted text-xs d-block">Department Rubric Grade:</span>
+                        <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                          {% if p.grade and p.grade != 'Pending' %}
+                            <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30 fw-bold">{{ p.grade }}</span>
+                            <span class="text-white fw-semibold small">({{ p.score }}/100)</span>
+                          {% else %}
+                            <span class="badge bg-secondary bg-opacity-20 text-slate-muted border border-secondary border-opacity-30">Ungraded</span>
+                            <span class="text-slate-muted text-xs">Awaiting Rubric</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <span class="text-slate-muted text-xs d-block">Criteria Breakdown:</span>
+                        <span class="text-slate-muted text-xs">
+                          Inn: <strong class="text-cyan">{{ p.score_innovation|default(0) }}</strong> |
+                          Tech: <strong class="text-indigo">{{ p.score_technical|default(0) }}</strong> |
+                          Pres: <strong class="text-amber">{{ p.score_presentation|default(0) }}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Prominent Rubric Grading Studio Launcher -->
+                    <button type="button" class="btn btn-primary-glow btn-sm w-100 mb-3" 
+                      onclick="openRubricModal({{ p.id }}, '{{ p.title|replace('\'', '\\\'') }}', '{{ p.student_name|replace('\'', '\\\'') }}', '{{ p.student_email|replace('\'', '\\\'') }}', '{{ p.category }}', {{ p.score_innovation|default(0) }}, {{ p.score_technical|default(0) }}, {{ p.score_presentation|default(0) }}, '{{ p.grade|default('Pending') }}', '{{ p.status }}', '{{ (p.feedback or '')|replace('\'', '\\\'')|replace('\n', ' ')|replace('\r', '') }}', '{{ (p.methodology or '')|replace('\'', '\\\'')|replace('\n', ' ')|replace('\r', '') }}')">
+                      <i class="bi bi-sliders2-vertical me-1.5"></i> Launch Rubric Evaluation Studio
+                    </button>
+
+                    {% if p.feedback %}
+                      <div class="bg-dark bg-opacity-50 p-2.5 rounded-3 mb-3 border border-secondary border-opacity-30">
+                        <small class="text-cyan fw-semibold d-block">Faculty Mentor Feedback:</small>
+                        <span class="text-slate-muted small">"{{ p.feedback }}"</span>
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Review & Evaluation Form Accordion / Modal trigger -->
+                  <div class="pt-3 border-top border-secondary border-opacity-30">
+                    <form method="post" action="{{ url_for('faculty_review_project', pid=p.id) }}" class="row g-2">
+                      <div class="col-sm-5">
+                        <select name="status" class="form-select form-select-modern form-select-sm" required>
+                          <option value="Approved" {% if p.status == 'Approved' %}selected{% endif %}>Approve Project</option>
+                          <option value="Needs Revision" {% if p.status == 'Needs Revision' %}selected{% endif %}>Request Revision</option>
+                          <option value="Under Review" {% if p.status == 'Under Review' %}selected{% endif %}>Mark Under Review</option>
+                          <option value="Rejected" {% if p.status == 'Rejected' %}selected{% endif %}>Reject</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-3">
+                        <input name="score" type="number" min="0" max="100" class="form-control form-control-modern form-control-sm" placeholder="Score" value="{{ p.score if p.score else '' }}">
+                      </div>
+                      <div class="col-sm-4 text-end">
+                        <button type="submit" class="btn btn-primary-glow btn-sm w-100">
+                          <i class="bi bi-check2"></i> Save Review
+                        </button>
+                      </div>
+                      <div class="col-12 mt-1">
+                        <input name="feedback" class="form-control form-control-modern form-control-sm" placeholder="Add feedback remarks for the student..." value="{{ p.feedback if p.feedback else '' }}">
+                      </div>
+                    </form>
+                  </div>
+
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-slate-muted">
+            <i class="bi bi-inbox fs-1 text-cyan opacity-40 d-block mb-2"></i>
+            No project submissions awaiting your review.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. FACULTY MESSAGE CORNER NOTICES TAB -->
+    <div class="tab-pane fade" id="tab-messages" role="tabpanel">
+      <div class="row g-4">
+        <!-- Post Message Form -->
+        <div class="col-lg-5">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-2"><i class="bi bi-megaphone-fill text-amber me-2"></i>Post to Message Corner</h4>
+            <p class="text-slate-muted small mb-4">Advisories published here appear dynamically on the departmental landing page and in student dashboards.</p>
+
+            <form method="post" action="{{ url_for('faculty_post_message') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Announcement Title *</label>
+                <input class="form-control form-control-modern" name="title" placeholder="e.g., Mandatory Project Abstract Deadline Notice" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Category</label>
+                  <select name="category" class="form-select form-select-modern">
+                    <option value="Announcement">Announcement</option>
+                    <option value="Advisory">Advisory</option>
+                    <option value="Project Opportunity">Project Opportunity</option>
+                    <option value="Deadline Alert">Deadline Alert</option>
+                    <option value="Research Call">Research Call</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Priority Level</label>
+                  <select name="priority" class="form-select form-select-modern">
+                    <option value="Normal">Normal</option>
+                    <option value="Important">Important</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Detailed Message Content *</label>
+                <textarea class="form-control form-control-modern" name="content" rows="4" placeholder="Write the announcement details, links, instructions..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2">
+                <i class="bi bi-send-fill me-1"></i> Broadcast to Message Corner
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- List of Messages Posted -->
+        <div class="col-lg-7">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-3">Your Published Announcements ({{ my_messages|length }})</h4>
+            
+            {% if my_messages %}
+              <div class="d-grid gap-3">
+                {% for m in my_messages %}
+                  <div class="message-corner-card border-secondary">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <span class="badge bg-info text-dark me-1" style="font-size: 0.72rem;">{{ m.category }}</span>
+                        <span class="badge 
+                          {% if m.priority == 'Urgent' %}bg-danger
+                          {% elif m.priority == 'Important' %}bg-warning text-dark
+                          {% else %}bg-secondary{% endif %}" style="font-size: 0.72rem;">
+                          {{ m.priority }}
+                        </span>
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="text-slate-muted small">{{ m.created_at[:10] }}</span>
+                        <a href="{{ url_for('faculty_delete_message', mid=m.id) }}" class="btn btn-outline-danger btn-sm p-1" onclick="return confirm('Remove this message from the public Message Corner?')" title="Delete Announcement">
+                          <i class="bi bi-trash-fill"></i>
+                        </a>
+                      </div>
+                    </div>
+                    <h5 class="fw-bold text-white mb-2">{{ m.title }}</h5>
+                    <p class="text-slate-muted small mb-0">{{ m.content }}</p>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-5 text-slate-muted">
+                <i class="bi bi-chat-left-dots fs-2 text-cyan opacity-40 d-block mb-2"></i>
+                You haven't posted any announcements yet. Use the form on the left to broadcast advisories to students.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ONBOARD & MANAGE STUDENTS TAB -->
+    <div class="tab-pane fade" id="tab-students" role="tabpanel">
+      <div class="row g-4">
+        
+        <!-- Onboard Student Form -->
+        <div class="col-lg-4">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-person-plus-fill text-cyan me-2"></i>Onboard Student</h4>
+            <p class="text-slate-muted small mb-4">Register student with official academic details and login credentials.</p>
+
+            <form method="post" action="{{ url_for('faculty_add_student') }}" class="d-grid gap-3">
+              <div>
+                <label class="form-label-modern">Student Full Name *</label>
+                <input class="form-control form-control-modern" name="name" placeholder="e.g. Sheikh Zaid" required>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Class / Grade *</label>
+                <input class="form-control form-control-modern" name="class_name" placeholder="e.g. 11th AI & ICT / B.Tech AI-DS" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Roll Number *</label>
+                  <input class="form-control form-control-modern" name="roll_no" placeholder="e.g. 24-AI-01" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">Section</label>
+                  <input class="form-control form-control-modern" name="section" placeholder="e.g. Alpha / A">
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label-modern">Academic Email *</label>
+                  <input class="form-control form-control-modern" name="email" type="email" placeholder="student@gvei.com" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-modern">WhatsApp Number</label>
+                  <input class="form-control form-control-modern" name="whatsapp_no" placeholder="+91 94190XXXXX">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Login Password *</label>
+                <input class="form-control form-control-modern" name="password" type="password" placeholder="Initial student password" required>
+                <span class="text-slate-muted text-xs">Student uses this password with their email or roll number to log in.</span>
+              </div>
+
+              <div>
+                <label class="form-label-modern">Specialization Track</label>
+                <input class="form-control form-control-modern" name="specialization" value="Artificial Intelligence & Machine Learning">
+              </div>
+
+              <button type="submit" class="btn-primary-glow mt-2">
+                <i class="bi bi-person-check-fill me-1"></i> Register Student Account
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Registered Students Table -->
+        <div class="col-lg-8">
+          <div class="glass-panel p-4">
+            <h4 class="fw-bold text-white mb-3">Enrolled Department Students ({{ students|length }})</h4>
+            
+            <div class="table-responsive">
+              <table class="table-modern">
+                <thead>
+                  <tr>
+                    <th>Student Name &amp; Roll</th>
+                    <th>Class &amp; Sec</th>
+                    <th>Email &amp; WhatsApp</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in students %}
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="stat-icon-wrapper" style="width: 32px; height: 32px; font-size: 0.85rem; background: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+                            <i class="bi bi-person-fill"></i>
+                          </div>
+                          <div>
+                            <span class="fw-semibold text-white d-block">{{ s.name }}</span>
+                            {% if s.roll_no %}
+                              <span class="badge bg-secondary bg-opacity-30 text-cyan text-xs">Roll: {{ s.roll_no }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="small text-white">{{ s.class_name if s.class_name else (s.designation if s.designation else 'General') }}</div>
+                        {% if s.section %}
+                          <span class="text-slate-muted text-xs">Sec: {{ s.section }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="text-slate-muted small">{{ s.email }}</div>
+                        {% if s.whatsapp_no %}
+                          <a href="https://wa.me/{{ s.whatsapp_no.replace('+', '').replace(' ', '') }}" target="_blank" class="text-emerald text-xs text-decoration-none">
+                            <i class="bi bi-whatsapp me-0.5"></i>{{ s.whatsapp_no }}
+                          </a>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if s.status == 'Approved' %}
+                          <span class="badge-status-approved"><i class="bi bi-check-circle-fill"></i> Active</span>
+                        {% else %}
+                          <span class="badge-status-pending">{{ s.status }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center gap-1">
+                          <button type="button" class="btn btn-outline-cyan btn-sm p-1"
+                                  onclick="openStudentEditModal({{ s.id }}, '{{ s.name|e }}', '{{ (s.class_name or '')|e }}', '{{ (s.roll_no or '')|e }}', '{{ (s.section or '')|e }}', '{{ s.email|e }}', '{{ (s.whatsapp_no or '')|e }}', '{{ (s.specialization or '')|e }}')"
+                                  title="Edit Student">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <a href="{{ url_for('faculty_delete_student', sid=s.id) }}" class="btn btn-outline-danger btn-sm p-1" onclick="return confirm('Remove student {{ s.name }}?')" title="Delete Student">
+                            <i class="bi bi-trash-fill"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="5" class="text-center text-slate-muted py-4">No students enrolled yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. AI SKILL CLUB REGISTRY TAB -->
+    <div class="tab-pane fade" id="tab-club" role="tabpanel">
+      <div class="glass-panel p-4">
+        <h4 class="fw-bold text-white mb-3">AI Skill Club Department Registrations ({{ club_members|length }})</h4>
+        
+        {% if club_members %}
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Email</th>
+                  <th>Class Year</th>
+                  <th>Interests</th>
+                  <th>Notes</th>
+                  <th>Club Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in club_members %}
+                  <tr>
+                    <td class="fw-semibold text-white">{{ c.name }}</td>
+                    <td class="text-slate-muted small">{{ c.email }}</td>
+                    <td class="text-white small">{{ c.year }}</td>
+                    <td class="text-cyan small">{{ c.interests if c.interests else '—' }}</td>
+                    <td class="text-slate-muted small">{{ c.note if c.note else '—' }}</td>
+                    <td>
+                      {% if c.status == 'Approved' %}
+                        <span class="badge-status-approved">Approved</span>
+                      {% elif c.status == 'Rejected' %}
+                        <span class="badge-status-rejected">Rejected</span>
+                      {% else %}
+                        <span class="badge-status-pending">Pending</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-slate-muted">No club registrations logged.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 5. STUDENT ACTIVITY CERTIFICATE PROOFS TAB -->
+    <div class="tab-pane fade" id="tab-certificates" role="tabpanel">
+      <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold text-white mb-1"><i class="bi bi-patch-check-fill text-cyan me-2"></i>Student Activity Certificate Proofs</h4>
+            <p class="text-slate-muted small mb-0">Inspect student uploaded certificate proofs for department workshops, hackathons, and seminars. Assign official verification notes and status.</p>
+          </div>
+          <div>
+            <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30 px-3 py-1.5 rounded-pill">
+              Total Submissions: {{ participations|length }}
+            </span>
+          </div>
+        </div>
+
+        {% if participations %}
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Activity Event</th>
+                  <th>Proof Document</th>
+                  <th>Verifier Notes</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in participations %}
+                  <tr>
+                    <td>
+                      <span class="fw-semibold text-white d-block">{{ p.name }}</span>
+                      <small class="text-slate-muted">{{ p.email }}</small>
+                    </td>
+                    <td>
+                      <span class="text-white small fw-medium">{{ p.title }}</span>
+                    </td>
+                    <td>
+                      <a href="{{ p.proof }}" target="_blank" class="btn btn-glass btn-sm" title="Open proof document">
+                        <i class="bi bi-file-earmark-check text-cyan me-1"></i> View Proof
+                      </a>
+                    </td>
+                    <td>
+                      <span class="text-slate-muted small italic">
+                        {{ p.verifier_notes if p.verifier_notes else '—' }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if p.status == 'Approved' %}
+                        <span class="badge-status-approved"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                      {% elif p.status == 'Rejected' %}
+                        <span class="badge-status-rejected"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+                      {% else %}
+                        <span class="badge-status-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-outline-cyan btn-sm"
+                        onclick="openCertModal({{ p.id }}, '{{ p.name|replace('\'', '\\\'') }}', '{{ p.title|replace('\'', '\\\'') }}', '{{ p.proof|replace('\'', '\\\'') }}', '{{ p.status }}', '{{ (p.verifier_notes or '')|replace('\'', '\\\'')|replace('\n', ' ') }}')">
+                        <i class="bi bi-pencil-square me-1"></i> Verify
+                      </button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-slate-muted">
+            <i class="bi bi-patch-check fs-1 text-cyan opacity-40 d-block mb-2"></i>
+            No student activity participation proofs submitted yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 6. VIRTUAL LAB STUDENT CODE SUBMISSIONS TAB -->
+    <div class="tab-pane fade" id="tab-lab-submissions" role="tabpanel">
+      <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold text-white mb-1">
+              <i class="bi bi-terminal-fill text-cyan me-2"></i> Student Virtual Lab Submissions
+            </h4>
+            <p class="text-slate-muted small mb-0">
+              Direct student code handovers submitted to you for technical inspection, execution, and evaluation.
+            </p>
+          </div>
+          <div>
+            <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30">
+              <i class="bi bi-shield-lock-fill me-1"></i> Private Faculty Access
+            </span>
+          </div>
+        </div>
+
+        {% if lab_submissions %}
+          <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+              <thead class="border-secondary border-opacity-30 text-slate-muted text-xs text-uppercase">
+                <tr>
+                  <th>Student Info</th>
+                  <th>Lab Project & Language</th>
+                  <th>Submitted At</th>
+                  <th>Status</th>
+                  <th>Grade & Feedback</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="border-secondary border-opacity-20">
+                {% for sub in lab_submissions %}
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-white">{{ sub.student_name }}</div>
+                      <div class="text-slate-muted text-xs">
+                        {{ sub.student_roll_no or 'Roll N/A' }} • {{ sub.student_class or 'Student' }}
+                      </div>
+                      <div class="text-cyan text-xs">{{ sub.student_email }}</div>
+                    </td>
+                    <td>
+                      <div class="fw-bold text-white">{{ sub.title }}</div>
+                      <div class="d-flex align-items-center gap-1.5 mt-1">
+                        {% if sub.language == 'python' %}
+                          <span class="badge bg-primary bg-opacity-20 text-cyan text-xs"><i class="bi bi-filetype-py"></i> Python</span>
+                        {% elif sub.language == 'javascript' %}
+                          <span class="badge bg-warning bg-opacity-20 text-amber text-xs"><i class="bi bi-filetype-js"></i> JavaScript</span>
+                        {% else %}
+                          <span class="badge bg-success bg-opacity-20 text-emerald text-xs"><i class="bi bi-puzzle-fill"></i> Scratch / Blocks</span>
+                        {% endif %}
+                        <span class="text-slate-muted text-xs">({{ sub.files_count }} files)</span>
+                      </div>
+                      {% if sub.submission_notes %}
+                        <div class="mt-1.5 p-1.5 px-2 rounded bg-black bg-opacity-50 border border-cyan border-opacity-30 d-inline-flex align-items-center gap-1.5 text-xs text-white-50 text-truncate" style="max-width: 280px;" title="{{ sub.submission_notes }}">
+                          <i class="bi bi-chat-left-quote-fill text-cyan fs-7"></i>
+                          <span class="text-truncate">{{ sub.submission_notes }}</span>
+                        </div>
+                      {% endif %}
+                    </td>
+                    <td class="text-slate-muted small">
+                      {{ sub.submitted_at or sub.updated_at }}
+                    </td>
+                    <td>
+                      {% if sub.share_status == 'Shared' %}
+                        <span class="badge bg-warning bg-opacity-20 text-amber border border-warning border-opacity-30">
+                          <i class="bi bi-hourglass-split me-1"></i> Awaiting Review
+                        </span>
+                      {% elif sub.share_status == 'Reviewed' %}
+                        <span class="badge bg-success bg-opacity-20 text-emerald border border-success border-opacity-30">
+                          <i class="bi bi-check-circle-fill me-1"></i> Evaluated
+                        </span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ sub.share_status }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if sub.faculty_grade %}
+                        <div class="d-flex align-items-center gap-1.5">
+                          <span class="badge bg-gradient-cyan text-white fw-bold">{{ sub.faculty_grade }}</span>
+                          <span class="text-slate-muted text-xs text-truncate" style="max-width: 160px;" title="{{ sub.faculty_feedback }}">
+                            {{ sub.faculty_feedback or 'Feedback recorded.' }}
+                          </span>
+                        </div>
+                      {% else %}
+                        <span class="text-slate-muted text-xs">Pending assessment</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a href="{{ url_for('virtual_lab', project_id=sub.id) }}" class="btn btn-sm btn-primary-glow">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Inspect & Run Code
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-slate-muted">
+            <i class="bi bi-terminal fs-1 text-cyan opacity-40 d-block mb-2"></i>
+            No student laboratory projects have been submitted to you yet.
+            <div class="text-xs text-slate-muted mt-1">
+              When students select you in the "Share with Teacher" dropdown, their workspaces will appear here.
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================================
+     OFFICIAL FACULTY RUBRIC GRADING STUDIO MODAL
+     ======================================================================== -->
+<div class="modal fade" id="rubricGradingModal" tabindex="-1" aria-labelledby="rubricModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      
+      <!-- Modal Header -->
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.12));">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 48px; height: 48px; font-size: 1.5rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border-color: rgba(6, 182, 212, 0.4);">
+            <i class="bi bi-sliders2-vertical"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white brand-font mb-0" id="rubricModalLabel">
+              Official Rubric Evaluation Studio
+            </h5>
+            <div class="text-slate-muted text-xs mt-0.5">
+              AI & ICT Department Official 100-Point Capstone Grading Standard
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <form method="post" action="{{ url_for('faculty_grade_project') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="project_id" id="modalProjectId">
+
+          <!-- Project Context Capsule -->
+          <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-40 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+              <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30" id="modalProjectCategory">AI System</span>
+              <a id="modalProjectBlueprintLink" href="#" target="_blank" class="text-cyan small text-decoration-none">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View Full Blueprint & Demo
+              </a>
+            </div>
+            <h6 class="fw-bold text-white mb-1" id="modalProjectTitle">Project Title</h6>
+            <div class="text-slate-muted small">
+              Student Author: <strong class="text-white" id="modalStudentName">Name</strong> 
+              (<span class="text-cyan" id="modalStudentEmail">email</span>)
+            </div>
+          </div>
+
+          <!-- Dynamic Live Score Display Meter -->
+          <div class="p-3 rounded-3 mb-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(6, 182, 212, 0.3);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-slate-muted small fw-semibold text-uppercase tracking-wider">Live Composite Evaluation Score:</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fs-4 fw-bold text-cyan brand-font" id="modalTotalScoreText">0</span>
+                <span class="text-slate-muted fs-6">/ 100</span>
+                <span class="badge bg-primary px-3 py-1 rounded-pill fw-bold fs-6 ms-2" id="modalGradeBadge">Pending</span>
+              </div>
+            </div>
+            <div class="progress" style="height: 10px; background: rgba(255, 255, 255, 0.08); border-radius: 999px;">
+              <div id="modalProgressBar" class="progress-bar bg-gradient-cyan" role="progressbar" style="width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+            <input type="hidden" name="grade" id="modalGradeInput" value="Pending">
+          </div>
+
+          <!-- Rubric Criteria 3-Column Sliders -->
+          <div class="row g-3 mb-4">
+            
+            <!-- Criterion 1: Innovation & Novelty (35 pts) -->
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 h-100 bg-dark bg-opacity-40 border border-secondary border-opacity-30">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-modern mb-0 text-cyan fw-bold small">1. Innovation & Novelty</label>
+                  <span class="badge bg-cyan bg-opacity-20 text-cyan fw-bold" id="scoreInnoDisplay">0 / 35</span>
+                </div>
+                <div class="text-slate-muted text-xs mb-2">Originality of research problem, algorithmic uniqueness, and creative engineering.</div>
+                <input type="range" class="form-range custom-slider" id="modalScoreInno" name="score_innovation" min="0" max="35" value="0" oninput="updateRubricCalculations()">
+                <div class="d-flex justify-content-between text-slate-muted text-xs mt-1">
+                  <span>0 (Standard)</span>
+                  <span>18 (Good)</span>
+                  <span>35 (Peak)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Criterion 2: Technical Depth & Architecture (40 pts) -->
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 h-100 bg-dark bg-opacity-40 border border-secondary border-opacity-30">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-modern mb-0 text-indigo fw-bold small">2. Technical Depth</label>
+                  <span class="badge bg-indigo bg-opacity-20 text-indigo fw-bold" id="scoreTechDisplay">0 / 40</span>
+                </div>
+                <div class="text-slate-muted text-xs mb-2">Model training rigor, code modularity, pipeline engineering, and prototype viability.</div>
+                <input type="range" class="form-range custom-slider slider-indigo" id="modalScoreTech" name="score_technical" min="0" max="40" value="0" oninput="updateRubricCalculations()">
+                <div class="d-flex justify-content-between text-slate-muted text-xs mt-1">
+                  <span>0 (Basic)</span>
+                  <span>20 (Solid)</span>
+                  <span>40 (Mastery)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Criterion 3: Presentation & Documentation (25 pts) -->
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 h-100 bg-dark bg-opacity-40 border border-secondary border-opacity-30">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-modern mb-0 text-amber fw-bold small">3. Presentation & Docs</label>
+                  <span class="badge bg-amber bg-opacity-20 text-amber fw-bold" id="scorePresDisplay">0 / 25</span>
+                </div>
+                <div class="text-slate-muted text-xs mb-2">Abstract precision, GitHub README standards, live demonstration, and citations.</div>
+                <input type="range" class="form-range custom-slider slider-amber" id="modalScorePres" name="score_presentation" min="0" max="25" value="0" oninput="updateRubricCalculations()">
+                <div class="d-flex justify-content-between text-slate-muted text-xs mt-1">
+                  <span>0 (Lacking)</span>
+                  <span>13 (Clear)</span>
+                  <span>25 (Flawless)</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Evaluation Decision & Remarks -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-5">
+              <label class="form-label-modern">Formal Review Decision *</label>
+              <select name="status" id="modalStatusSelect" class="form-select form-select-modern" required>
+                <option value="Approved">Approve Project for Department Showcase</option>
+                <option value="Needs Revision">Needs Revision (Send back to student)</option>
+                <option value="Under Review">Keep Under Review / In Progress</option>
+                <option value="Rejected">Reject Project Proposal</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label-modern">Methodology & Architectural Notes</label>
+              <input name="methodology" id="modalMethodologyInput" class="form-control form-control-modern" placeholder="e.g. Approved with PyTorch 2.3 + TensorRT quantization pipeline...">
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label-modern">Faculty Mentor Feedback & Actionable Guidance *</label>
+            <textarea name="feedback" id="modalFeedbackInput" class="form-control form-control-modern" rows="3" placeholder="Provide detailed remarks to guide the student toward publishing or refining the project..." required></textarea>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer border-secondary border-opacity-30 p-3 px-4 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow px-4">
+            <i class="bi bi-check-circle-fill me-1.5"></i> Save Official Rubric Evaluation
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     STUDENT CERTIFICATE PROOF VERIFICATION MODAL
+     ======================================================================== -->
+<div class="modal fade" id="certVerifyModal" tabindex="-1" aria-labelledby="certModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);">
+      
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+            <i class="bi bi-patch-check-fill"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="certModalLabel">Verify Participation Proof</h5>
+            <div class="text-slate-muted text-xs">Department Activity Certification Audit</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('verify_participation') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="participation_id" id="modalCertPartId">
+
+          <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30 mb-3">
+            <div class="text-slate-muted text-xs">Student:</div>
+            <div class="fw-bold text-white" id="modalCertStudentName">Name</div>
+            <div class="text-slate-muted text-xs mt-2">Activity Title:</div>
+            <div class="fw-medium text-cyan" id="modalCertActivityTitle">Title</div>
+            <div class="mt-3">
+              <a id="modalCertProofLink" href="#" target="_blank" class="btn btn-outline-cyan btn-sm w-100">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Inspect Certificate Document / Proof
+              </a>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-modern">Verification Status *</label>
+            <select name="status" id="modalCertStatus" class="form-select form-select-modern" required>
+              <option value="Approved">Verified (Approve Certificate)</option>
+              <option value="Rejected">Rejected (Invalid Proof)</option>
+              <option value="Pending">Mark as Pending</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label-modern">Official Verifier Remarks</label>
+            <input name="verifier_notes" id="modalCertNotes" class="form-control form-control-modern" placeholder="e.g. Verified with event registration and attendance sheet...">
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary-glow px-4">
+            <i class="bi bi-check2-circle me-1"></i> Update Verification
+          </button>
+        </div>
+      </form>
+
+<!-- ========================================================================
+     FACULTY EDIT STUDENT MODAL
+     ======================================================================== -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content glass-panel border-cyan shadow-2xl p-0 overflow-hidden" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(28px);">
+      <div class="modal-header border-secondary border-opacity-30 p-4 pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border-color: rgba(6, 182, 212, 0.4);">
+            <i class="bi bi-pencil-square"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-0" id="editStudentModalLabel">Update Student Record</h5>
+            <div class="text-slate-muted text-xs">Modify class, roll number, section, WhatsApp contact, or reset password</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{{ url_for('faculty_update_student') }}">
+        <div class="modal-body p-4">
+          <input type="hidden" name="id" id="editStudentId">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-modern">Student Full Name *</label>
+              <input class="form-control form-control-modern" id="editStudentName" name="name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Class / Grade *</label>
+              <input class="form-control form-control-modern" id="editStudentClass" name="class_name" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Roll Number *</label>
+              <input class="form-control form-control-modern" id="editStudentRollNo" name="roll_no" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Section</label>
+              <input class="form-control form-control-modern" id="editStudentSection" name="section">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Academic Email *</label>
+              <input class="form-control form-control-modern" id="editStudentEmail" name="email" type="email" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">WhatsApp Number</label>
+              <input class="form-control form-control-modern" id="editStudentWhatsApp" name="whatsapp_no">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-modern">Specialization Track</label>
+              <input class="form-control form-control-modern" id="editStudentSpecialization" name="specialization">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-modern">Reset Password <span class="text-slate-muted text-xs">(Leave empty to keep current)</span></label>
+              <input class="form-control form-control-modern" name="password" type="password" placeholder="New password (optional)">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-secondary border-opacity-30 p-3">
+          <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-glow">
+            <i class="bi bi-check-circle-fill me-1"></i> Save Student Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Open and populate Edit Student Modal
+  function openStudentEditModal(id, name, className, rollNo, section, email, whatsapp, specialization) {
+    document.getElementById('editStudentId').value = id || '';
+    document.getElementById('editStudentName').value = name || '';
+    document.getElementById('editStudentClass').value = className || '';
+    document.getElementById('editStudentRollNo').value = rollNo || '';
+    document.getElementById('editStudentSection').value = section || '';
+    document.getElementById('editStudentEmail').value = email || '';
+    document.getElementById('editStudentWhatsApp').value = whatsapp || '';
+    document.getElementById('editStudentSpecialization').value = specialization || '';
+
+    const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+    modal.show();
+  }
+  // Open and populate Rubric Grading Studio
+  function openRubricModal(id, title, studentName, studentEmail, category, scoreInno, scoreTech, scorePres, grade, status, feedback, methodology) {
+    document.getElementById('modalProjectId').value = id;
+    document.getElementById('modalProjectTitle').textContent = title;
+    document.getElementById('modalStudentName').textContent = studentName;
+    document.getElementById('modalStudentEmail').textContent = studentEmail;
+    document.getElementById('modalProjectCategory').textContent = category;
+    document.getElementById('modalProjectBlueprintLink').href = '/project/' + id;
+
+    document.getElementById('modalScoreInno').value = scoreInno || 0;
+    document.getElementById('modalScoreTech').value = scoreTech || 0;
+    document.getElementById('modalScorePres').value = scorePres || 0;
+
+    document.getElementById('modalStatusSelect').value = status || 'Approved';
+    document.getElementById('modalFeedbackInput').value = feedback || '';
+    document.getElementById('modalMethodologyInput').value = methodology || '';
+
+    updateRubricCalculations();
+
+    const rubricModal = new bootstrap.Modal(document.getElementById('rubricGradingModal'));
+    rubricModal.show();
+  }
+
+  // Live Rubric Calculations
+  function updateRubricCalculations() {
+    const inno = parseInt(document.getElementById('modalScoreInno').value) || 0;
+    const tech = parseInt(document.getElementById('modalScoreTech').value) || 0;
+    const pres = parseInt(document.getElementById('modalScorePres').value) || 0;
+
+    document.getElementById('scoreInnoDisplay').textContent = inno + ' / 35';
+    document.getElementById('scoreTechDisplay').textContent = tech + ' / 40';
+    document.getElementById('scorePresDisplay').textContent = pres + ' / 25';
+
+    const total = Math.min(100, Math.max(0, inno + tech + pres));
+    document.getElementById('modalTotalScoreText').textContent = total;
+    document.getElementById('modalProgressBar').style.width = total + '%';
+
+    let grade = 'Needs Revision';
+    let badgeClass = 'badge bg-danger text-white';
+
+    if (total >= 90) {
+      grade = 'A+';
+      badgeClass = 'badge bg-gradient-cyan text-white';
+    } else if (total >= 80) {
+      grade = 'A';
+      badgeClass = 'badge bg-primary text-white';
+    } else if (total >= 70) {
+      grade = 'B+';
+      badgeClass = 'badge bg-info text-dark';
+    } else if (total >= 60) {
+      grade = 'B';
+      badgeClass = 'badge bg-warning text-dark';
+    } else if (total >= 50) {
+      grade = 'C';
+      badgeClass = 'badge bg-secondary text-white';
+    }
+
+    const badgeElem = document.getElementById('modalGradeBadge');
+    badgeElem.textContent = 'Grade: ' + grade;
+    badgeElem.className = badgeClass + ' px-3 py-1 rounded-pill fw-bold fs-6 ms-2';
+    document.getElementById('modalGradeInput').value = grade;
+  }
+
+  // Open and populate Certificate Proof Verification Modal
+  function openCertModal(id, studentName, activityTitle, proofUrl, status, verifierNotes) {
+    document.getElementById('modalCertPartId').value = id;
+    document.getElementById('modalCertStudentName').textContent = studentName;
+    document.getElementById('modalCertActivityTitle').textContent = activityTitle;
+    document.getElementById('modalCertProofLink').href = proofUrl;
+    document.getElementById('modalCertStatus').value = status || 'Approved';
+    document.getElementById('modalCertNotes').value = verifierNotes || '';
+
+    const certModal = new bootstrap.Modal(document.getElementById('certVerifyModal'));
+    certModal.show();
+  }
+</script>
+{% endblock %}

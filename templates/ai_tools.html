@@ -1,0 +1,731 @@
+{% extends "base.html" %}
+{% block title %}Academic Research & Capstone Tools — AI & ICT Department{% endblock %}
+
+{% block body %}
+<div class="container my-1 my-md-2 py-0">
+
+  <!-- ========================================================================
+       HERO INSTITUTIONAL BANNER (Above-the-Fold Compact Ribbon)
+       ======================================================================== -->
+  <div class="glass-panel p-2.5 mb-2 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)); border: 1px solid rgba(6, 182, 212, 0.25);">
+    <div class="row align-items-center g-2 position-relative" style="z-index: 2;">
+      <div class="col-lg-8">
+        <div class="d-inline-flex align-items-center gap-1.5 px-2 py-0.5 rounded-pill bg-primary bg-opacity-20 border border-primary border-opacity-30 text-cyan mb-1">
+          <i class="bi bi-mortarboard"></i>
+          <span class="text-xs fw-semibold">Department Research &amp; Capstone Suite</span>
+        </div>
+        <h1 class="h4 fw-bold text-white brand-font mb-0.5">
+          Capstone Project &amp; <span class="text-gradient-cyan">Research Advisory</span>
+        </h1>
+        <p class="text-slate-muted small mb-1.5" style="max-width: 680px; font-size: 0.78rem;">
+          Formulate capstone architectures, evaluate proposal abstracts against official faculty rubrics, and access academic advising.
+        </p>
+        <div class="d-flex flex-wrap gap-1.5">
+          <button class="btn btn-primary-glow btn-sm py-1 px-2.5" onclick="document.getElementById('tab-generator-btn').click();">
+            <i class="bi bi-diagram-3 me-1"></i> Architecture Generator
+          </button>
+          <button class="btn btn-outline-cyan btn-sm py-1 px-2.5" onclick="document.getElementById('tab-evaluator-btn').click();">
+            <i class="bi bi-file-earmark-check me-1"></i> Proposal Evaluator
+          </button>
+          <button class="btn btn-glass btn-sm py-1 px-2.5" onclick="document.getElementById('tab-chat-btn').click();">
+            <i class="bi bi-chat-left-text text-cyan me-1"></i> Academic Advisory
+          </button>
+        </div>
+      </div>
+
+      <div class="col-lg-4 mt-2 mt-lg-0">
+        <div class="p-2 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-40">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="text-slate-muted text-xs fw-semibold text-uppercase tracking-wider">Evaluation Standard</span>
+            <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30" style="font-size: 0.65rem;">Active</span>
+          </div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="stat-icon-wrapper" style="width: 26px; height: 26px; font-size: 0.85rem; background: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+              <i class="bi bi-sliders"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-white text-xs">100-Point Department Rubric</div>
+              <div class="text-slate-muted" style="font-size: 0.68rem;">Innovation (35) &bull; Tech Arch (40) &bull; Docs (25)</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="stat-icon-wrapper" style="width: 26px; height: 26px; font-size: 0.85rem; background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+              <i class="bi bi-mortarboard"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-white text-xs">Faculty Mentorship Scope</div>
+              <div class="text-slate-muted" style="font-size: 0.68rem;">Supervised by Er. Mehraj U Din Mir &amp; Staff</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       STUDIO TAB NAVIGATION
+       ======================================================================== -->
+  <div class="mb-2">
+    <ul class="nav nav-pills-modern" id="aiStudioTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-generator-btn" data-bs-toggle="pill" data-bs-target="#pane-generator" type="button" role="tab">
+          <i class="bi bi-diagram-3-fill me-1.5 text-cyan"></i> Capstone Architecture Generator
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-evaluator-btn" data-bs-toggle="pill" data-bs-target="#pane-evaluator" type="button" role="tab">
+          <i class="bi bi-file-earmark-check-fill me-1.5 text-cyan"></i> Proposal Abstract Evaluator
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-chat-btn" data-bs-toggle="pill" data-bs-target="#pane-chat" type="button" role="tab">
+          <i class="bi bi-chat-left-text-fill me-1.5 text-cyan"></i> Department Academic Advisory
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ========================================================================
+       TAB CONTENT PANES
+       ======================================================================== -->
+  <div class="tab-content" id="aiStudioTabsContent">
+
+    <!-- ----------------------------------------------------------------------
+         TAB 1: CAPSTONE IDEA & ARCHITECTURE GENERATOR
+         ---------------------------------------------------------------------- -->
+    <div class="tab-pane fade show active" id="pane-generator" role="tabpanel">
+      <div class="row g-3">
+        
+        <!-- Controls Column -->
+        <div class="col-lg-5">
+          <div class="glass-panel p-3.5 h-100">
+            <h5 class="fw-bold text-white mb-1"><i class="bi bi-sliders text-cyan me-2"></i>Architecture Parameters</h5>
+            <p class="text-slate-muted small mb-2.5">Select research track, target academic complexity, and preferred frameworks to formulate a project specification.</p>
+
+            <form id="ideaForm" onsubmit="generateIdea(event)">
+              <div class="mb-3">
+                <label class="form-label-modern">Research &amp; Engineering Track *</label>
+                <select id="ideaDomain" class="form-select form-select-modern" required>
+                  <option value="Computer Vision & Edge AI">Computer Vision &amp; Edge AI</option>
+                  <option value="Generative AI & LLMs">Generative AI &amp; Large Language Models</option>
+                  <option value="Autonomous Systems & Robotics">Autonomous Systems &amp; Aerial Robotics</option>
+                  <option value="Healthcare & Medical Informatics">Healthcare &amp; Clinical Medical Informatics</option>
+                  <option value="Cybersecurity & Threat Detection">Cybersecurity &amp; Kernel-Level Threat Detection</option>
+                  <option value="Smart Campus & IoT">Smart Campus Microgrids &amp; TinyML IoT</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label-modern">Academic Scope *</label>
+                <select id="ideaComplexity" class="form-select form-select-modern">
+                  <option value="Capstone / Final Year Project">Capstone / Final Year B.Tech Project</option>
+                  <option value="Undergraduate Mini-Project">Undergraduate Semester Mini-Project</option>
+                  <option value="Master's Research Thesis">Master's / Research Publication Track</option>
+                  <option value="Hackathon / Commercial Prototype">Industry / Commercial Prototype</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label-modern">Preferred Frameworks &amp; Tooling</label>
+                <input id="ideaTechStack" class="form-control form-control-modern" value="PyTorch, OpenCV, TensorRT, FastAPI, Docker" placeholder="e.g. PyTorch, ROS2, HuggingFace, Flutter...">
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('PyTorch')">+ PyTorch</span>
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('TensorFlow')">+ TensorFlow</span>
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('LangChain')">+ LangChain</span>
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('ROS2')">+ ROS2</span>
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('OpenCV')">+ OpenCV</span>
+                  <span class="badge bg-secondary bg-opacity-30 text-slate-muted cursor-pointer" onclick="appendTech('Docker')">+ Docker</span>
+                </div>
+              </div>
+
+              <button type="submit" id="btnGenerateIdea" class="btn btn-primary-glow btn-lg w-100">
+                <i class="bi bi-cpu me-2"></i> Generate Capstone Architecture
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Output Column -->
+        <div class="col-lg-7">
+          <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between position-relative">
+            
+            <div id="ideaPlaceholder" class="text-center py-5 my-auto">
+              <div class="stat-icon-wrapper mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2.2rem; background: rgba(6, 182, 212, 0.1); color: #06b6d4;">
+                <i class="bi bi-diagram-3"></i>
+              </div>
+              <h5 class="fw-bold text-white mb-2">Awaiting Specification</h5>
+              <p class="text-slate-muted small mx-auto" style="max-width: 440px;">
+                Select your parameters on the left and click "Generate Capstone Architecture" to formulate a structured academic project blueprint.
+              </p>
+            </div>
+
+            <!-- Result Card -->
+            <div id="ideaResultCard" class="d-none">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-primary bg-opacity-20 text-cyan border border-primary border-opacity-30" id="resDomainBadge">Track</span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-glass btn-sm" onclick="copyIdeaBlueprint()" title="Copy entire blueprint">
+                    <i class="bi bi-clipboard me-1"></i> <span id="copyIdeaText">Copy Specification</span>
+                  </button>
+                  <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-cyan btn-sm">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Submit in Dashboard
+                  </a>
+                </div>
+              </div>
+
+              <h4 class="fw-bold text-white mb-2" id="resTitle">Title Here</h4>
+
+              <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30 mb-3">
+                <span class="text-cyan fw-semibold small d-block mb-1">Abstract &amp; Problem Statement:</span>
+                <p class="text-slate-muted small mb-0" id="resAbstract"></p>
+              </div>
+
+              <div class="mb-3">
+                <span class="text-indigo fw-semibold small d-block mb-1">Proposed Methodological Architecture:</span>
+                <div class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 text-white small" id="resMethodology"></div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 h-100">
+                    <span class="text-amber fw-semibold small d-block mb-1"><i class="bi bi-database me-1"></i>Recommended Datasets:</span>
+                    <ul class="text-slate-muted small ps-3 mb-0" id="resDatasetsList"></ul>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 h-100">
+                    <span class="text-cyan fw-semibold small d-block mb-1"><i class="bi bi-speedometer2 me-1"></i>Evaluation Metrics:</span>
+                    <p class="text-slate-muted small mb-0" id="resMetrics"></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-primary border-opacity-30 mb-3">
+                <span class="text-cyan fw-semibold small d-block mb-0.5"><i class="bi bi-shield-check me-1"></i>Key Research Novelty:</span>
+                <span class="text-white small" id="resNovelty"></span>
+              </div>
+
+              <div>
+                <span class="text-slate-muted text-xs d-block mb-1">Recommended Framework Stack:</span>
+                <div class="d-flex flex-wrap gap-1" id="resTechStackContainer"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ----------------------------------------------------------------------
+         TAB 2: ABSTRACT & PROPOSAL EVALUATOR
+         ---------------------------------------------------------------------- -->
+    <div class="tab-pane fade" id="pane-evaluator" role="tabpanel">
+      <div class="row g-3">
+        
+        <!-- Input Column -->
+        <div class="col-lg-5">
+          <div class="glass-panel p-3.5 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <h5 class="fw-bold text-white mb-0"><i class="bi bi-file-earmark-text text-cyan me-2"></i>Proposal Draft</h5>
+              <button type="button" class="btn btn-glass btn-sm" onclick="loadSampleProposal()">
+                <i class="bi bi-file-earmark-medical me-1"></i> Benchmark Draft
+              </button>
+            </div>
+            <p class="text-slate-muted small mb-2.5">Paste your capstone proposal to evaluate it against the official Department Grading Rubric.</p>
+
+            <form id="evalForm" onsubmit="evaluateProposal(event)">
+              <div class="mb-2.5">
+                <label class="form-label-modern">Project Proposal Title *</label>
+                <input id="evalTitle" class="form-control form-control-modern" placeholder="e.g. EdgeVision-Shield: Real-time Defect Detection..." required>
+              </div>
+
+              <div class="mb-2.5">
+                <label class="form-label-modern">Abstract &amp; Proposed Methodology *</label>
+                <textarea id="evalAbstract" class="form-control form-control-modern" rows="5" placeholder="Describe the research problem, proposed architecture, datasets, and expected evaluation metrics (minimum 25 words)..." required></textarea>
+                <div class="d-flex justify-content-between text-slate-muted text-xs mt-1">
+                  <span>Minimum 25 words</span>
+                  <span id="evalWordCount">0 words</span>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label-modern">Framework Stack / Tools</label>
+                <input id="evalTechStack" class="form-control form-control-modern" placeholder="e.g. PyTorch, OpenCV, TensorRT, Docker">
+              </div>
+
+              <button type="submit" id="btnEvalProposal" class="btn btn-primary-glow btn-lg w-100">
+                <i class="bi bi-check2-circle me-2"></i> Evaluate Proposal Abstract
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Evaluation Results Column -->
+        <div class="col-lg-7">
+          <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between">
+            
+            <div id="evalPlaceholder" class="text-center py-5 my-auto">
+              <div class="stat-icon-wrapper mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2.2rem; background: rgba(6, 182, 212, 0.1); color: #22d3ee;">
+                <i class="bi bi-file-earmark-check"></i>
+              </div>
+              <h5 class="fw-bold text-white mb-2">Awaiting Proposal Analysis</h5>
+              <p class="text-slate-muted small mx-auto" style="max-width: 440px;">
+                Enter your title and abstract on the left or click <strong>Benchmark Draft</strong> to run an algorithmic evaluation against the department rubric.
+              </p>
+            </div>
+
+            <!-- Score Results Board -->
+            <div id="evalResultBoard" class="d-none">
+              
+              <!-- Top Score Banner -->
+              <div class="p-3.5 rounded-3 mb-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border: 1px solid rgba(6, 182, 212, 0.35);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                  <div>
+                    <span class="text-slate-muted text-xs text-uppercase tracking-wider fw-semibold d-block">Department Rubric Assessment</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-0.5">
+                      <span class="display-6 fw-bold text-cyan brand-font" id="resEvalTotalScore">0</span>
+                      <span class="text-slate-muted fs-5">/ 100</span>
+                      <span class="badge bg-primary px-3 py-1.5 rounded-pill fw-bold fs-6 ms-2" id="resEvalGradeBadge">Grade: A</span>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="text-slate-muted text-xs d-block">Assessment Summary:</span>
+                    <div class="fw-semibold text-white small" id="resEvalGradeDesc">Strong Foundation</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3 Rubric Criteria Progress Meters -->
+              <div class="row g-3 mb-4">
+                
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="text-cyan small fw-bold">Innovation (35)</span>
+                      <span class="fw-bold text-white small" id="resEvalInnoScore">0/35</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div id="resEvalInnoBar" class="progress-bar bg-cyan" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="text-indigo small fw-bold">Architecture (40)</span>
+                      <span class="fw-bold text-white small" id="resEvalTechScore">0/40</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div id="resEvalTechBar" class="progress-bar bg-indigo" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="text-amber small fw-bold">Presentation (25)</span>
+                      <span class="fw-bold text-white small" id="resEvalPresScore">0/25</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div id="resEvalPresBar" class="progress-bar bg-warning" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Strengths & Missing Elements Grid -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 h-100">
+                    <span class="text-emerald fw-semibold small d-block mb-2">
+                      <i class="bi bi-check2-circle me-1"></i> Identified Strengths:
+                    </span>
+                    <ul class="text-slate-muted small ps-3 mb-0" id="resEvalStrengthsList"></ul>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="p-3 rounded-3 bg-dark bg-opacity-40 border border-secondary border-opacity-30 h-100">
+                    <span class="text-amber fw-semibold small d-block mb-2">
+                      <i class="bi bi-exclamation-circle me-1"></i> Missing Elements / Recommendations:
+                    </span>
+                    <ul class="text-slate-muted small ps-3 mb-0" id="resEvalMissingList"></ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actionable Guidance -->
+              <div class="p-3.5 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30">
+                <span class="text-cyan fw-semibold small d-block mb-1">
+                  <i class="bi bi-arrow-right-circle me-1"></i> Guidance for Faculty Review:
+                </span>
+                <ul class="text-slate-muted small ps-3 mb-0" id="resEvalRecsList"></ul>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ----------------------------------------------------------------------
+         TAB 3: DEPARTMENT ACADEMIC ADVISORY
+         ---------------------------------------------------------------------- -->
+    <div class="tab-pane fade" id="pane-chat" role="tabpanel">
+      <div class="glass-panel p-3.5" style="min-height: 460px; display: flex; flex-direction: column;">
+        
+        <!-- Chat Header -->
+        <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-secondary border-opacity-30 mb-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="stat-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.3rem; background: rgba(6, 182, 212, 0.15); color: #22d3ee; border-color: rgba(6, 182, 212, 0.3);">
+              <i class="bi bi-mortarboard"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-white mb-0 brand-font">Department Academic Advisory</h5>
+              <div class="text-slate-muted text-xs">Curriculum Requirements, Capstone Rubrics &amp; Faculty Research Directives</div>
+            </div>
+          </div>
+          <div>
+            <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-3 py-1 rounded-pill">
+              <span class="live-dot me-1"></span> Advisory Active
+            </span>
+          </div>
+        </div>
+
+        <!-- Pre-configured Quick Prompts -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-glass btn-sm" onclick="sendQuickPrompt('Explain the departmental capstone rubric criteria')">
+            <i class="bi bi-sliders text-cyan me-1"></i> Capstone Rubric (100 Pts)
+          </button>
+          <button class="btn btn-glass btn-sm" onclick="sendQuickPrompt('What are Er. Mehraj U Din Mir\'s research and mentorship areas?')">
+            <i class="bi bi-person-workspace text-indigo me-1"></i> Er. Mehraj U Din Mir
+          </button>
+          <button class="btn btn-glass btn-sm" onclick="sendQuickPrompt('How do I submit my project and get faculty approval?')">
+            <i class="bi bi-send text-emerald me-1"></i> Submission Workflow
+          </button>
+          <button class="btn btn-glass btn-sm" onclick="sendQuickPrompt('Tell me about AI Skill Club tracks and how to join')">
+            <i class="bi bi-cpu text-pink me-1"></i> AI Skill Club
+          </button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chatMessages" class="flex-grow-1 overflow-auto p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-30 mb-3" style="max-height: 440px;">
+          <!-- Initial Welcome Message -->
+          <div class="d-flex gap-3 mb-3">
+            <div class="stat-icon-wrapper flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee;">
+              <i class="bi bi-mortarboard"></i>
+            </div>
+            <div class="p-3 rounded-4 bg-dark bg-opacity-60 border border-secondary border-opacity-40 text-slate-muted small" style="max-width: 85%;">
+              <div class="fw-bold text-white mb-1">Department Academic Advisory</div>
+              <div>
+                Welcome to the Department Academic Advisory. You may inquire about capstone proposal standards, 100-point rubric evaluation criteria, faculty research specializations, or framework implementation advice.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chatForm" onsubmit="submitChatMessage(event)" class="d-flex gap-2">
+          <input id="chatInput" class="form-control form-control-modern" placeholder="Inquire about capstone rubrics, Er. Mehraj U Din Mir, or technical frameworks..." autocomplete="off" required>
+          <button type="submit" id="btnSendChat" class="btn btn-primary-glow px-4">
+            <i class="bi bi-arrow-right-circle me-1"></i> Inquire
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Helper to append tech stack tags
+  function appendTech(tech) {
+    const input = document.getElementById('ideaTechStack');
+    const existing = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    if (!existing.includes(tech)) {
+      existing.push(tech);
+      input.value = existing.join(', ');
+    }
+  }
+
+  // 1. Generate Capstone Idea Blueprint
+  function generateIdea(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnGenerateIdea');
+    const domain = document.getElementById('ideaDomain').value;
+    const complexity = document.getElementById('ideaComplexity').value;
+    const techStack = document.getElementById('ideaTechStack').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Generating Architecture...';
+
+    fetch('/api/ai/generate-idea', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: domain, complexity: complexity, tech_stack: techStack })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cpu me-2"></i> Generate Capstone Architecture';
+
+      if (data.success && data.idea) {
+        const idea = data.idea;
+        document.getElementById('ideaPlaceholder').classList.add('d-none');
+        document.getElementById('ideaResultCard').classList.remove('d-none');
+
+        document.getElementById('resDomainBadge').textContent = idea.domain + ' • ' + idea.complexity;
+        document.getElementById('resTitle').textContent = idea.title;
+        document.getElementById('resAbstract').textContent = idea.abstract;
+        document.getElementById('resMethodology').textContent = idea.methodology;
+        document.getElementById('resMetrics').textContent = idea.evaluation_metrics;
+        document.getElementById('resNovelty').textContent = idea.novelty_angle;
+
+        const dsList = document.getElementById('resDatasetsList');
+        dsList.innerHTML = '';
+        (idea.datasets || []).forEach(ds => {
+          const li = document.createElement('li');
+          li.textContent = ds;
+          dsList.appendChild(li);
+        });
+
+        const techContainer = document.getElementById('resTechStackContainer');
+        techContainer.innerHTML = '';
+        (idea.tech_stack || '').split(',').forEach(t => {
+          const span = document.createElement('span');
+          span.className = 'tech-tag';
+          span.textContent = t.trim();
+          techContainer.appendChild(span);
+        });
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cpu me-2"></i> Generate Capstone Architecture';
+      alert('Error connecting to architecture formulation service.');
+    });
+  }
+
+  // Copy blueprint to clipboard
+  function copyIdeaBlueprint() {
+    const title = document.getElementById('resTitle').textContent;
+    const abs = document.getElementById('resAbstract').textContent;
+    const method = document.getElementById('resMethodology').textContent;
+    const text = `PROJECT SPECIFICATION:\nTitle: ${title}\n\nAbstract:\n${abs}\n\nMethodology:\n${method}\n`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyIdeaText');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Specification'; }, 2000);
+    });
+  }
+
+  // Word counter on abstract textarea
+  const abstractInput = document.getElementById('evalAbstract');
+  if (abstractInput) {
+    abstractInput.addEventListener('input', function() {
+      const words = this.value.trim().split(/\s+/).filter(Boolean);
+      document.getElementById('evalWordCount').textContent = words.length + ' words';
+    });
+  }
+
+  // Load benchmark proposal draft
+  function loadSampleProposal() {
+    document.getElementById('evalTitle').value = 'EdgeVision-Shield: Real-Time Multimodal Industrial Defect Detection via Quantized Vision Transformers';
+    document.getElementById('evalAbstract').value = 'Modern manufacturing pipelines suffer from manual inspection latency and worker safety protocol violations. In this capstone project, we propose EdgeVision-Shield, an end-to-end edge-computed computer vision pipeline. The system deploys INT8-quantized MobileViT architectures on low-power NVIDIA Jetson and Raspberry Pi edge nodes. Using the MVTec AD industrial anomaly benchmark and RoboFlow PPE dataset, our model targets 96.8% mean Average Precision while maintaining a frame latency under 18ms. A centralized Flask telemetry dashboard dispatches real-time automated safety alerts.';
+    document.getElementById('evalTechStack').value = 'PyTorch, TensorRT, OpenCV, FastAPI, Docker, MQTT';
+    document.getElementById('evalWordCount').textContent = '76 words';
+  }
+
+  // 2. Evaluate Proposal Draft
+  function evaluateProposal(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEvalProposal');
+    const title = document.getElementById('evalTitle').value;
+    const abstract = document.getElementById('evalAbstract').value;
+    const techStack = document.getElementById('evalTechStack').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Evaluating Proposal...';
+
+    fetch('/api/ai/analyze-proposal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title, abstract: abstract, tech_stack: techStack })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check2-circle me-2"></i> Evaluate Proposal Abstract';
+
+      if (data.success) {
+        document.getElementById('evalPlaceholder').classList.add('d-none');
+        document.getElementById('evalResultBoard').classList.remove('d-none');
+
+        document.getElementById('resEvalTotalScore').textContent = data.total_score;
+        document.getElementById('resEvalGradeBadge').textContent = 'Grade: ' + data.grade;
+        document.getElementById('resEvalGradeDesc').textContent = data.grade_desc;
+
+        // Breakdown scores
+        document.getElementById('resEvalInnoScore').textContent = data.scores.innovation + ' / 35';
+        document.getElementById('resEvalInnoBar').style.width = data.rubric_percentages.innovation_pct + '%';
+
+        document.getElementById('resEvalTechScore').textContent = data.scores.technical + ' / 40';
+        document.getElementById('resEvalTechBar').style.width = data.rubric_percentages.technical_pct + '%';
+
+        document.getElementById('resEvalPresScore').textContent = data.scores.presentation + ' / 25';
+        document.getElementById('resEvalPresBar').style.width = data.rubric_percentages.presentation_pct + '%';
+
+        // Strengths
+        const strList = document.getElementById('resEvalStrengthsList');
+        strList.innerHTML = '';
+        (data.strengths || []).forEach(s => {
+          const li = document.createElement('li');
+          li.textContent = s;
+          strList.appendChild(li);
+        });
+
+        // Missing Elements
+        const missList = document.getElementById('resEvalMissingList');
+        missList.innerHTML = '';
+        if (data.missing_elements && data.missing_elements.length > 0) {
+          data.missing_elements.forEach(m => {
+            const li = document.createElement('li');
+            li.textContent = m;
+            missList.appendChild(li);
+          });
+        } else {
+          missList.innerHTML = '<li class="text-success">No critical missing elements detected. Structurally comprehensive proposal.</li>';
+        }
+
+        // Recommendations
+        const recList = document.getElementById('resEvalRecsList');
+        recList.innerHTML = '';
+        (data.recommendations || []).forEach(r => {
+          const li = document.createElement('li');
+          li.textContent = r;
+          recList.appendChild(li);
+        });
+      } else {
+        alert(data.message || 'Evaluation error.');
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check2-circle me-2"></i> Evaluate Proposal Abstract';
+      alert('Failed to evaluate proposal.');
+    });
+  }
+
+  // 3. Department Academic Advisory Chat
+  function sendQuickPrompt(prompt) {
+    document.getElementById('chatInput').value = prompt;
+    submitChatMessage(new Event('submit'));
+  }
+
+  function submitChatMessage(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const chatBox = document.getElementById('chatMessages');
+
+    // Append user message
+    const userDiv = document.createElement('div');
+    userDiv.className = 'd-flex justify-content-end mb-3';
+    userDiv.innerHTML = `
+      <div class="p-3 rounded-4 bg-primary bg-opacity-20 border border-primary border-opacity-30 text-white small" style="max-width: 80%;">
+        ${escapeHtml(msg)}
+      </div>
+    `;
+    chatBox.appendChild(userDiv);
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Append loading bubble
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'd-flex gap-3 mb-3';
+    loadingDiv.id = 'chatLoading';
+    loadingDiv.innerHTML = `
+      <div class="stat-icon-wrapper flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee;">
+        <i class="bi bi-mortarboard"></i>
+      </div>
+      <div class="p-3 rounded-4 bg-dark bg-opacity-60 border border-secondary border-opacity-40 text-slate-muted small">
+        <span class="spinner-grow spinner-grow-sm text-cyan me-1"></span> Consulting department knowledge base...
+      </div>
+    `;
+    chatBox.appendChild(loadingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Call backend API
+    fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const loader = document.getElementById('chatLoading');
+      if (loader) loader.remove();
+
+      const botDiv = document.createElement('div');
+      botDiv.className = 'd-flex gap-3 mb-3';
+      botDiv.innerHTML = `
+        <div class="stat-icon-wrapper flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background: rgba(6, 182, 212, 0.2); color: #22d3ee;">
+          <i class="bi bi-mortarboard"></i>
+        </div>
+        <div class="p-3 rounded-4 bg-dark bg-opacity-60 border border-secondary border-opacity-40 text-slate-muted small chat-content" style="max-width: 85%;">
+          <div class="fw-bold text-white mb-1">Department Academic Advisory</div>
+          <div>${formatMarkdown(data.reply || '')}</div>
+        </div>
+      `;
+      chatBox.appendChild(botDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(() => {
+      const loader = document.getElementById('chatLoading');
+      if (loader) loader.remove();
+
+      const errDiv = document.createElement('div');
+      errDiv.className = 'd-flex gap-3 mb-3';
+      errDiv.innerHTML = `
+        <div class="stat-icon-wrapper flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background: rgba(244, 63, 94, 0.2); color: #fb7185;">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="p-3 rounded-4 bg-dark bg-opacity-60 border border-danger border-opacity-40 text-danger small">
+          Unable to connect to advisory service. Please try again.
+        </div>
+      `;
+      chatBox.appendChild(errDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatMarkdown(text) {
+    let html = escapeHtml(text);
+    html = html.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-white mt-2 mb-1">$1</h6>');
+    html = html.replace(/^## (.*$)/gim, '<h5 class="fw-bold text-cyan mt-2 mb-1">$1</h5>');
+    html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="text-white">$1</strong>');
+    html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+    html = html.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-cyan text-decoration-none">$1 <i class="bi bi-box-arrow-up-right text-xs"></i></a>');
+    html = html.replace(/^\- (.*$)/gim, '<div class="ms-2 mb-1">&bull; $1</div>');
+    html = html.replace(/\n/gim, '<br>');
+    return html;
+  }
+</script>
+{% endblock %}
