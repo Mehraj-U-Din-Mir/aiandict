@@ -168,15 +168,18 @@ CREATE TABLE IF NOT EXISTS club_registrations (
 CREATE TABLE IF NOT EXISTS virtual_lab_projects (
     id BIGSERIAL PRIMARY KEY,
     student_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    student_name VARCHAR(255) DEFAULT 'Student Researcher',
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    code_content TEXT DEFAULT '',
     language VARCHAR(50) NOT NULL DEFAULT 'python',
     shared_faculty_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-    share_status VARCHAR(50) NOT NULL DEFAULT 'Draft',
+    faculty_name VARCHAR(255) DEFAULT 'Er. Mehraj U Din Mir',
+    share_status VARCHAR(50) NOT NULL DEFAULT 'Submitted',
     submission_notes TEXT DEFAULT NULL,
     faculty_feedback TEXT,
-    faculty_grade VARCHAR(20),
-    submitted_at TIMESTAMPTZ,
+    faculty_grade VARCHAR(20) DEFAULT 'Pending',
+    submitted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

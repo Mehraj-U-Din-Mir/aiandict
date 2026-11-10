@@ -584,4 +584,64 @@ export const initialStudyMaterials = [
   }
 ];
 
+export const initialLabSubmissions = [
+  {
+    id: 1,
+    student_id: 6,
+    student_name: "Zubair Ahmad",
+    student_email: "student@dept.ai",
+    title: "Orchard Anomaly Edge Quantization & Inference Pipeline",
+    language: "python",
+    shared_faculty_id: 3,
+    faculty_name: "Er. Mehraj U Din Mir",
+    share_status: "Reviewed",
+    submission_notes: "Sir, please review the activation function and latency benchmark for INT8 quantization.",
+    faculty_feedback: "Well structured tensor operations! The sigmoid probability mapping is crisp. Try testing with varying ambient brightness.",
+    faculty_grade: "A+",
+    code_content: `# Single-Layer Perceptron Inference Benchmark
+import math
+import time
+
+def dot_product(v1, v2):
+    return sum(x * y for x, y in zip(v1, v2))
+
+def sigmoid(x):
+    return 1.0 / (1.0 + math.exp(-x))
+
+features = [0.85, 0.42, 0.91, 0.18]
+weights = [0.65, -0.35, 0.88, 0.12]
+bias = -0.25
+
+logit = dot_product(features, weights) + bias
+probability = sigmoid(logit)
+print(f"Prediction: {probability * 100:.2f}% anomaly certainty")
+`,
+    submitted_at: "2025-09-18"
+  },
+  {
+    id: 2,
+    student_id: 6,
+    student_name: "Insha Farooq",
+    student_email: "insha@student.gvei.edu",
+    title: "LoRaWAN Sensor Node Telemetry Web Dashboard",
+    language: "html",
+    shared_faculty_id: 4,
+    faculty_name: "Prof. Salman Ahmed",
+    share_status: "Submitted",
+    submission_notes: "Prof. Salman, I have developed the live web dashboard UI for our orchard soil sensor nodes.",
+    faculty_feedback: "",
+    faculty_grade: "Pending",
+    code_content: `<!DOCTYPE html>
+<html>
+<head><title>Telemetry</title></head>
+<body>
+  <h2>Orchard IoT Monitor</h2>
+  <p>Soil Moisture: 410 mV | Temp: 24.2 °C</p>
+</body>
+</html>`,
+    submitted_at: "2025-10-05"
+  }
+];
+
+
 

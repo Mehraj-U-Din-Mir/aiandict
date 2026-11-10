@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Terminal, 
   Play, 
@@ -22,7 +24,11 @@ import {
   FileText,
   Layers,
   Code2,
-  AlertCircle
+  AlertCircle,
+  Send,
+  GraduationCap,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 
 // Starter Project Templates
@@ -438,6 +444,77 @@ export default function VirtualLab() {
       localStorage.setItem('ai_ict_virtual_lab_fs', JSON.stringify(updated));
       return updated;
     });
+  };
+
+  const { faculty, currentUser, isAuthenticated } = useAuth();
+  const { submitLabCode } = useData();
+
+  // Send to Faculty Modal State
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedFacultyId, setSelectedFacultyId] = useState('');
+  const [submissionTitle, setSubmissionTitle] = useState('');
+  const [submissionScope, setSubmissionScope] = useState('active_file'); // 'active_file' | 'all_files'
+  const [submissionNotes, setSubmissionNotes] = useState('');
+  const [submittingCode, setSubmittingCode] = useState(false);
+  const [shareSuccessMsg, setShareSuccessMsg] = useState('');
+  const [shareError, setShareError] = useState('');
+
+  const openShareModal = () => {
+    if (faculty.length > 0 && !selectedFacultyId) {
+      setSelectedFacultyId(faculty[0].id.toString());
+    }
+    setSubmissionTitle(`${activeFile?.name || 'Lab Experiment'} - Program Submission`);
+    setShareSuccessMsg('');
+    setShareError('');
+    setShareModalOpen(true);
+  };
+
+  const handleSendToFaculty = async (e) => {
+    e.preventDefault();
+    setShareError('');
+    if (!selectedFacultyId) {
+      setShareError('Please choose a faculty mentor from the dropdown.');
+      return;
+    }
+
+    setSubmittingCode(true);
+    const targetFaculty = faculty.find(f => f.id.toString() === selectedFacultyId.toString()) || faculty[0];
+
+    // Prepare code payload based on chosen scope
+    let codePayload = '';
+    if (submissionScope === 'active_file') {
+      codePayload = `// ==================================================\n// Primary File: ${activeFile?.name} (${activeFile?.language})\n// ==================================================\n\n${codeContent}`;
+    } else {
+      codePayload = files
+        .filter(f => f.type === 'file')
+        .map(f => `// ==================================================\n// Workspace File: ${f.name} (${f.language})\n// Folder: ${f.folder}\n// ==================================================\n\n${f.content}`)
+        .join('\n\n');
+    }
+
+    try {
+      await submitLabCode({
+        student_id: currentUser?.id || Date.now(),
+        student_name: currentUser?.name || 'Student Researcher',
+        student_email: currentUser?.email || 'student@dept.ai',
+        title: submissionTitle || `${activeFile?.name} Program Submission`,
+        language: activeFile?.language || 'python',
+        shared_faculty_id: targetFaculty?.id,
+        faculty_name: targetFaculty?.name || 'Er. Mehraj U Din Mir',
+        submission_notes: submissionNotes,
+        code_content: codePayload
+      });
+
+      setShareSuccessMsg(`Code program successfully submitted to ${targetFaculty?.name}!`);
+      setTimeout(() => {
+        setShareModalOpen(false);
+        setShareSuccessMsg('');
+        setSubmissionNotes('');
+      }, 2200);
+    } catch (err) {
+      setShareError('Failed to transmit code submission. Please retry.');
+    } finally {
+      setSubmittingCode(false);
+    }
   };
 
   // Folders and UI state
@@ -1001,10 +1078,20 @@ export default function VirtualLab() {
                   type="button"
                   onClick={handleRunCode}
                   disabled={isRunning}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2 transition-all shadow-md shadow-emerald-600/25 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/25 disabled:opacity-50"
                 >
                   <Play className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
                   <span>{isRunning ? 'Running...' : 'Run Code'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openShareModal}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/25"
+                  title="Send this program to a faculty member for evaluation"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Send to Faculty</span>
                 </button>
               </div>
             </div>
@@ -1166,6 +1253,171 @@ export default function VirtualLab() {
                 >
                   Create
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: SEND CODE PROGRAM TO FACULTY MEMBER */}
+      {/* ========================================================================= */}
+      {shareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Send Code to Faculty Mentor</h3>
+                  <p className="text-xs text-slate-400">Submit your program code for review, evaluation, and supervisor grading</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShareModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {shareSuccessMsg && (
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{shareSuccessMsg}</span>
+              </div>
+            )}
+
+            {shareError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{shareError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSendToFaculty} className="space-y-4 text-xs">
+              
+              {/* Faculty Dropdown Selection */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5 flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Select Faculty Member *</span>
+                </label>
+                <select
+                  required
+                  value={selectedFacultyId}
+                  onChange={(e) => setSelectedFacultyId(e.target.value)}
+                  className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                >
+                  <option value="" disabled>-- Choose Faculty Supervisor --</option>
+                  {faculty.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} — {f.designation} ({f.specialization || 'AI & ICT'})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  The selected faculty member will receive your code in their supervision dashboard.
+                </p>
+              </div>
+
+              {/* Submission Title */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">
+                  Program / Assignment Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={submissionTitle}
+                  onChange={(e) => setSubmissionTitle(e.target.value)}
+                  placeholder="e.g. YOLOv8 Edge Inference Optimization - Lab 3"
+                  className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Scope Selection */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">
+                  Code Payload Scope
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSubmissionScope('active_file')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      submissionScope === 'active_file'
+                        ? 'bg-indigo-600/15 text-indigo-200 border-indigo-500/40 shadow-sm'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <div className="font-semibold text-xs text-white">Active File Only</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5 truncate">{activeFile?.name || 'current file'}</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSubmissionScope('all_files')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      submissionScope === 'all_files'
+                        ? 'bg-indigo-600/15 text-indigo-200 border-indigo-500/40 shadow-sm'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <div className="font-semibold text-xs text-white">Full Workspace</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">{files.filter(f => f.type === 'file').length} files bundled</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Student Notes */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">
+                  Notes / Questions for Faculty Supervisor
+                </label>
+                <textarea
+                  rows="3"
+                  value={submissionNotes}
+                  onChange={(e) => setSubmissionNotes(e.target.value)}
+                  placeholder="e.g. Respected Sir, please check the activation function efficiency and let me know if any hyperparameter tuning is needed..."
+                  className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <span className="text-[11px] text-slate-500">
+                  Submitting as: <strong className="text-slate-300">{currentUser?.name || 'Student Researcher'}</strong>
+                </span>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShareModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingCode}
+                    className="px-5 py-2 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 shadow-md shadow-indigo-600/25 disabled:opacity-50"
+                  >
+                    {submittingCode ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Transmitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send to Faculty</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

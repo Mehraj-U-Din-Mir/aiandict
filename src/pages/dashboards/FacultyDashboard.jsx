@@ -10,12 +10,19 @@ import {
   Award, 
   Plus, 
   Bell, 
-  X,
-  FileText,
-  Upload,
-  BookOpen,
-  Trash2,
-  Download
+  X, 
+  FileText, 
+  Upload, 
+  BookOpen, 
+  Trash2, 
+  Download,
+  Terminal,
+  Code2,
+  Send,
+  Eye,
+  Check,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 
 export default function FacultyDashboard() {
@@ -26,17 +33,26 @@ export default function FacultyDashboard() {
     addMessage, 
     studyMaterials, 
     addStudyMaterial, 
-    deleteStudyMaterial 
+    deleteStudyMaterial,
+    labSubmissions,
+    reviewLabSubmission
   } = useData();
 
-  const [activeTab, setActiveTab] = useState('proposals'); // 'proposals', 'study'
+  const [activeTab, setActiveTab] = useState('proposals'); // 'proposals', 'submissions', 'study'
 
-  // Review modal state
+  // Capstone Review modal state
   const [selectedProject, setSelectedProject] = useState(null);
   const [reviewStatus, setReviewStatus] = useState('Approved');
   const [reviewFeedback, setReviewFeedback] = useState('');
   const [reviewScore, setReviewScore] = useState(90);
   const [reviewGrade, setReviewGrade] = useState('A+');
+
+  // Lab Code Submission Review Modal State
+  const [selectedLabSub, setSelectedLabSub] = useState(null);
+  const [labFeedback, setLabFeedback] = useState('');
+  const [labGrade, setLabGrade] = useState('A+');
+  const [labStatus, setLabStatus] = useState('Reviewed');
+  const [labSuccessMsg, setLabSuccessMsg] = useState('');
 
   // Announcement modal state
   const [msgModalOpen, setMsgModalOpen] = useState(false);
@@ -80,6 +96,26 @@ export default function FacultyDashboard() {
     setSelectedProject(null);
   };
 
+  const openLabReviewModal = (sub) => {
+    setSelectedLabSub(sub);
+    setLabFeedback(sub.faculty_feedback || '');
+    setLabGrade(sub.faculty_grade && sub.faculty_grade !== 'Pending' ? sub.faculty_grade : 'A+');
+    setLabStatus(sub.share_status || 'Reviewed');
+    setLabSuccessMsg('');
+  };
+
+  const handleSaveLabReview = async (e) => {
+    e.preventDefault();
+    if (!selectedLabSub) return;
+
+    await reviewLabSubmission(selectedLabSub.id, labFeedback, labGrade, labStatus);
+    setLabSuccessMsg('Evaluation and feedback successfully saved for the student!');
+    setTimeout(() => {
+      setSelectedLabSub(null);
+      setLabSuccessMsg('');
+    }, 1500);
+  };
+
   const handlePostMessage = (e) => {
     e.preventDefault();
     addMessage({
@@ -116,7 +152,12 @@ export default function FacultyDashboard() {
     });
   };
 
-  const myStudyMaterials = studyMaterials.filter(m => m.uploaded_by === currentUser?.id || m.uploader_name === currentUser?.name);
+  // Filter lab submissions sent to this faculty (or show all if admin)
+  const myLabSubmissions = labSubmissions.filter(s => 
+    s.shared_faculty_id === currentUser?.id || 
+    currentUser?.role === 'admin' || 
+    (currentUser?.name && s.faculty_name?.toLowerCase().includes(currentUser.name.toLowerCase()))
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -161,18 +202,27 @@ export default function FacultyDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-3">
+      <div className="flex gap-2 border-b border-slate-800 pb-3 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('proposals')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
             activeTab === 'proposals' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
-          Capstone Proposals Under Supervision ({projects.length})
+          Capstone Proposals ({projects.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('submissions')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            activeTab === 'submissions' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Student Lab Code Submissions ({myLabSubmissions.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('study')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
             activeTab === 'study' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
@@ -248,7 +298,93 @@ export default function FacultyDashboard() {
         </div>
       )}
 
-      {/* TAB 2: Study Materials Management */}
+      {/* ========================================================================= */}
+      {/* TAB 2: STUDENT LAB CODE SUBMISSIONS (Sent via Virtual Code Studio) */}
+      {/* ========================================================================= */}
+      {activeTab === 'submissions' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-emerald-400" />
+              <span>Student Lab Code Submissions for Your Supervision</span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Review code files transmitted by students from the Virtual Code Lab, analyze implementation logic, and record academic evaluations.
+            </p>
+          </div>
+
+          {myLabSubmissions.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl bg-slate-900/40 border border-slate-800 space-y-3">
+              <Code2 className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">No Code Programs Received Yet</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                When students write and transmit their Python, Web App, or Algorithm programs to you from the Virtual Lab, they will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myLabSubmissions.map(sub => (
+                <div
+                  key={sub.id}
+                  className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 hover:border-emerald-500/40 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+                >
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                        {sub.language || 'python'}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                        sub.share_status === 'Reviewed' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      }`}>
+                        {sub.share_status}
+                      </span>
+                      {sub.faculty_grade && sub.faculty_grade !== 'Pending' && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-200">
+                          Grade: {sub.faculty_grade}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-base font-bold text-white">{sub.title}</h3>
+
+                    <div className="text-xs text-slate-400 flex flex-wrap gap-4 pt-0.5">
+                      <span>Submitted By: <strong className="text-slate-200">{sub.student_name}</strong> ({sub.student_email})</span>
+                      <span>Assigned Faculty: <strong className="text-slate-200">{sub.faculty_name}</strong></span>
+                      <span>Date: <strong className="text-slate-300">{sub.submitted_at}</strong></span>
+                    </div>
+
+                    {sub.submission_notes && (
+                      <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300">
+                        <span className="text-slate-500 font-semibold block mb-0.5">Student Note:</span>
+                        "{sub.submission_notes}"
+                      </div>
+                    )}
+
+                    {sub.faculty_feedback && (
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-slate-200">
+                        <span className="text-emerald-400 font-semibold block mb-0.5">Your Recorded Evaluation:</span>
+                        {sub.faculty_feedback}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex md:flex-col gap-2 shrink-0">
+                    <button
+                      onClick={() => openLabReviewModal(sub)}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Inspect Code & Grade</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: Study Materials Management */}
       {activeTab === 'study' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -315,7 +451,127 @@ export default function FacultyDashboard() {
         </div>
       )}
 
-      {/* Review & Grading Modal */}
+      {/* ========================================================================= */}
+      {/* MODAL: INSPECT STUDENT CODE & RECORD EVALUATION */}
+      {/* ========================================================================= */}
+      {selectedLabSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+            
+            <div className="p-6 border-b border-slate-800 flex items-start justify-between gap-4 bg-slate-900/90">
+              <div>
+                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                  {selectedLabSub.language}
+                </span>
+                <h3 className="text-lg font-bold text-white mt-1">{selectedLabSub.title}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Student: <strong className="text-slate-200">{selectedLabSub.student_name}</strong> • Submitted: {selectedLabSub.submitted_at}
+                </p>
+              </div>
+              <button onClick={() => setSelectedLabSub(null)} className="text-slate-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto space-y-5">
+              
+              {selectedLabSub.submission_notes && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs">
+                  <span className="text-slate-400 font-semibold block mb-1">Student Notes & Context:</span>
+                  <p className="text-slate-200 italic">"{selectedLabSub.submission_notes}"</p>
+                </div>
+              )}
+
+              {/* Code Viewer */}
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-1.5">
+                  <span>Program Code Body:</span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(selectedLabSub.code_content)}
+                    className="hover:text-white flex items-center gap-1"
+                  >
+                    <span>Copy Code</span>
+                  </button>
+                </div>
+                <div className="bg-black/80 rounded-2xl p-4 border border-slate-800 font-mono text-xs text-emerald-300 max-h-[280px] overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                  {selectedLabSub.code_content || '// No code content available'}
+                </div>
+              </div>
+
+              {/* Evaluation Form */}
+              <form onSubmit={handleSaveLabReview} className="space-y-4 pt-2 border-t border-slate-800 text-xs">
+                {labSuccessMsg && (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{labSuccessMsg}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Evaluation Status</label>
+                    <select
+                      value={labStatus}
+                      onChange={(e) => setLabStatus(e.target.value)}
+                      className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                    >
+                      <option value="Reviewed">Reviewed & Approved</option>
+                      <option value="Needs Revision">Needs Revision</option>
+                      <option value="Submitted">Pending Review</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Grade Assigned</label>
+                    <select
+                      value={labGrade}
+                      onChange={(e) => setLabGrade(e.target.value)}
+                      className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                    >
+                      <option value="O (Outstanding)">O (Outstanding)</option>
+                      <option value="A+">A+</option>
+                      <option value="A">A</option>
+                      <option value="B+">B+</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Supervisor Technical Remarks / Feedback</label>
+                  <textarea
+                    rows="3"
+                    value={labFeedback}
+                    onChange={(e) => setLabFeedback(e.target.value)}
+                    placeholder="Provide constructive feedback, algorithm analysis, optimization suggestions, or next steps..."
+                    className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLabSub(null)}
+                    className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20"
+                  >
+                    Save & Return to Student
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Capstone Review Modal */}
       {selectedProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
           <div className="w-full max-w-xl p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">

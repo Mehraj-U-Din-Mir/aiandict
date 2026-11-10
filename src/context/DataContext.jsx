@@ -9,7 +9,8 @@ import {
   initialDocuments,
   initialClubRegistrations,
   initialParticipations,
-  initialStudyMaterials
+  initialStudyMaterials,
+  initialLabSubmissions
 } from '../data/initialData';
 
 const DataContext = createContext();
@@ -24,6 +25,7 @@ export function DataProvider({ children }) {
   const [clubRegistrations, setClubRegistrations] = useState(initialClubRegistrations);
   const [participations, setParticipations] = useState(initialParticipations);
   const [studyMaterials, setStudyMaterials] = useState(initialStudyMaterials);
+  const [labSubmissions, setLabSubmissions] = useState(initialLabSubmissions);
   const [loading, setLoading] = useState(true);
 
   // ─── Fetch All Data from Supabase with Graceful Fallback ───────────
@@ -31,15 +33,16 @@ export function DataProvider({ children }) {
     setLoading(true);
     try {
       const [
-        { data: proj, error: projErr },
-        { data: msg, error: msgErr },
-        { data: act, error: actErr },
-        { data: ach, error: achErr },
-        { data: club, error: clubErr },
-        { data: docs, error: docsErr },
-        { data: reg, error: regErr },
-        { data: part, error: partErr },
-        { data: mats, error: matsErr }
+        { data: proj },
+        { data: msg },
+        { data: act },
+        { data: ach },
+        { data: club },
+        { data: docs },
+        { data: reg },
+        { data: part },
+        { data: mats },
+        { data: labData }
       ] = await Promise.all([
         supabase.from('projects').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
         supabase.from('messages').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
@@ -49,7 +52,8 @@ export function DataProvider({ children }) {
         supabase.from('departmental_documents').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
         supabase.from('club_registrations').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
         supabase.from('participations').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
-        supabase.from('study_materials').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null }))
+        supabase.from('study_materials').select('*').order('created_at', { ascending: false }).catch(() => ({ data: null })),
+        supabase.from('virtual_lab_projects').select('*').order('submitted_at', { ascending: false }).catch(() => ({ data: null }))
       ]);
 
       if (proj && proj.length > 0) {
@@ -82,6 +86,9 @@ export function DataProvider({ children }) {
           ...m,
           uploader_name: m.uploader_name || 'Department Faculty'
         })));
+      }
+      if (labData && labData.length > 0) {
+        setLabSubmissions(labData);
       }
     } catch (err) {
       console.warn('[DataContext] Notice: Using master default dataset:', err.message);
@@ -117,7 +124,6 @@ export function DataProvider({ children }) {
       created_at: new Date().toISOString().split('T')[0]
     };
 
-    // Try Supabase insert
     try {
       const { data } = await supabase.from('projects').insert([{
         title: newProj.title,
@@ -308,7 +314,7 @@ export function DataProvider({ children }) {
     }));
   };
 
-  // ─── Study Materials (Uploaded by Admin/Faculty -> Student Dashboard) ──
+  // ─── Study Materials ────────────────────────────────────────────────
   const addStudyMaterial = async (matData) => {
     const newMat = {
       id: Date.now(),
@@ -349,6 +355,65 @@ export function DataProvider({ children }) {
     return { success: true };
   };
 
+  // ─── Virtual Lab Submissions (Student -> Faculty) ───────────────────
+  const submitLabCode = async (subData) => {
+    const newSubmission = {
+      id: Date.now(),
+      student_id: subData.student_id || Date.now(),
+      student_name: subData.student_name || 'Student Researcher',
+      student_email: subData.student_email || 'student@dept.ai',
+      title: subData.title || 'Virtual Lab Code Submission',
+      language: subData.language || 'python',
+      shared_faculty_id: subData.shared_faculty_id,
+      faculty_name: subData.faculty_name || 'Er. Mehraj U Din Mir',
+      share_status: 'Submitted',
+      submission_notes: subData.submission_notes || '',
+      code_content: subData.code_content || '',
+      faculty_feedback: '',
+      faculty_grade: 'Pending',
+      submitted_at: new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      const { data } = await supabase.from('virtual_lab_projects').insert([{
+        student_id: newSubmission.student_id,
+        title: newSubmission.title,
+        language: newSubmission.language,
+        shared_faculty_id: newSubmission.shared_faculty_id,
+        share_status: 'Submitted',
+        submission_notes: newSubmission.submission_notes,
+        code_content: newSubmission.code_content
+      }]).select().single();
+      if (data) newSubmission.id = data.id;
+    } catch (e) {}
+
+    setLabSubmissions(prev => [newSubmission, ...prev]);
+    return { success: true, submission: newSubmission };
+  };
+
+  const reviewLabSubmission = async (id, feedback, grade, status = 'Reviewed') => {
+    try {
+      await supabase.from('virtual_lab_projects').update({
+        faculty_feedback: feedback,
+        faculty_grade: grade,
+        share_status: status
+      }).eq('id', id);
+    } catch (e) {}
+
+    setLabSubmissions(prev => prev.map(s => {
+      if (String(s.id) === String(id)) {
+        return {
+          ...s,
+          faculty_feedback: feedback,
+          faculty_grade: grade,
+          share_status: status
+        };
+      }
+      return s;
+    }));
+    return { success: true };
+  };
+
   // Reset to initial seed
   const resetToDefaults = () => {
     setProjects(initialProjects);
@@ -360,7 +425,9 @@ export function DataProvider({ children }) {
     setClubRegistrations(initialClubRegistrations);
     setParticipations(initialParticipations);
     setStudyMaterials(initialStudyMaterials);
+    setLabSubmissions(initialLabSubmissions);
     localStorage.removeItem('ai_ict_custom_users');
+    localStorage.removeItem('ai_ict_virtual_lab_fs');
   };
 
   return (
@@ -374,6 +441,7 @@ export function DataProvider({ children }) {
       clubRegistrations,
       participations,
       studyMaterials,
+      labSubmissions,
       loading,
       addProject,
       updateProjectStatus,
@@ -388,6 +456,8 @@ export function DataProvider({ children }) {
       incrementDocumentDownload,
       addStudyMaterial,
       deleteStudyMaterial,
+      submitLabCode,
+      reviewLabSubmission,
       resetToDefaults,
       fetchAll
     }}>

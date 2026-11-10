@@ -19,14 +19,16 @@ import {
   Eye,
   Search,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Terminal,
+  Code2
 } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { currentUser } = useAuth();
-  const { projects, addProject, clubRegistrations, studyMaterials } = useData();
+  const { projects, addProject, clubRegistrations, studyMaterials, labSubmissions } = useData();
 
-  const [activeTab, setActiveTab] = useState('projects'); // 'projects', 'materials', 'club'
+  const [activeTab, setActiveTab] = useState('projects'); // 'projects', 'materials', 'submissions', 'club'
   const [modalOpen, setModalOpen] = useState(false);
   const [previewMaterial, setPreviewMaterial] = useState(null);
   const [studyFilter, setStudyFilter] = useState('All');
@@ -52,6 +54,12 @@ export default function StudentDashboard() {
   const myClubStatus = clubRegistrations.find(r => 
     r.user_email === currentUser?.email || 
     (currentUser?.name && r.user_name?.toLowerCase().includes(currentUser.name.toLowerCase()))
+  );
+
+  const myLabSubmissions = labSubmissions.filter(s => 
+    s.student_id === currentUser?.id || 
+    (currentUser?.name && s.student_name?.toLowerCase().includes(currentUser.name.toLowerCase())) ||
+    (currentUser?.email && s.student_email === currentUser.email)
   );
 
   const handleCreateProject = async (e) => {
@@ -125,6 +133,14 @@ export default function StudentDashboard() {
           </button>
 
           <Link
+            to="/virtual-lab"
+            className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 flex items-center gap-2 transition-all"
+          >
+            <Terminal className="w-4 h-4" />
+            <span>Open Virtual Lab</span>
+          </Link>
+
+          <Link
             to="/club-register"
             className="px-5 py-2.5 rounded-xl font-bold text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 flex items-center gap-2 transition-all"
           >
@@ -144,6 +160,17 @@ export default function StudentDashboard() {
         >
           My Capstone Submissions ({myProjects.length})
         </button>
+
+        <button
+          onClick={() => setActiveTab('submissions')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            activeTab === 'submissions' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+          <span>My Lab Code Submissions ({myLabSubmissions.length})</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('materials')}
           className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -152,6 +179,7 @@ export default function StudentDashboard() {
         >
           Study Materials & Handouts ({studyMaterials.length})
         </button>
+
         <button
           onClick={() => setActiveTab('club')}
           className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -254,8 +282,102 @@ export default function StudentDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: STUDY MATERIALS (Uploaded by Admin & Faculty -> Displayed to Student) */}
+      {/* TAB 2: MY LAB CODE SUBMISSIONS (Sent from Virtual Code Studio) */}
       {/* ========================================================================= */}
+      {activeTab === 'submissions' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Terminal className="w-5 h-5 text-emerald-400" />
+                <span>My Virtual Lab Code Submissions</span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Programs you transmitted to faculty mentors directly from the Virtual Code Studio
+              </p>
+            </div>
+            
+            <Link
+              to="/virtual-lab"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20 w-fit"
+            >
+              <Code2 className="w-3.5 h-3.5" />
+              <span>Open Virtual Lab to Submit Code</span>
+            </Link>
+          </div>
+
+          {myLabSubmissions.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl bg-slate-900/50 border border-slate-800 space-y-4">
+              <Terminal className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">No Code Submissions Yet</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                You haven't transmitted any code programs to a faculty mentor yet. Open the Virtual Code Studio to write your script and click "Send to Faculty".
+              </p>
+              <Link
+                to="/virtual-lab"
+                className="inline-block px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white"
+              >
+                Go to Virtual Code Studio
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myLabSubmissions.map(sub => (
+                <div
+                  key={sub.id}
+                  className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                        {sub.language}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                        sub.share_status === 'Reviewed' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      }`}>
+                        {sub.share_status}
+                      </span>
+                    </div>
+
+                    {sub.faculty_grade && sub.faculty_grade !== 'Pending' && (
+                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-950 border border-slate-800 text-emerald-400">
+                        Grade: {sub.faculty_grade}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-base font-bold text-white">{sub.title}</h3>
+
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs flex flex-wrap gap-4 text-slate-400">
+                    <div>Assigned Mentor: <strong className="text-indigo-300">{sub.faculty_name}</strong></div>
+                    <div>Submitted: <strong className="text-slate-300">{sub.submitted_at}</strong></div>
+                  </div>
+
+                  {sub.submission_notes && (
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300">
+                      <span className="text-slate-500 block text-[11px] font-semibold mb-0.5">Your Question / Remark:</span>
+                      "{sub.submission_notes}"
+                    </div>
+                  )}
+
+                  {sub.faculty_feedback ? (
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
+                      <span className="text-emerald-400 font-bold block">Supervisor Evaluation & Feedback:</span>
+                      <p className="text-slate-200 leading-relaxed">{sub.faculty_feedback}</p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-500 italic">
+                      Awaiting supervisor review and grading remarks.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: Study Materials */}
       {activeTab === 'materials' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -363,7 +485,7 @@ export default function StudentDashboard() {
         </div>
       )}
 
-      {/* TAB 3: Club Membership */}
+      {/* TAB 4: Club Membership */}
       {activeTab === 'club' && (
         <div className="p-8 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-6">
           <div className="flex items-center justify-between">
