@@ -4,8 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   GraduationCap, 
   AlertCircle, 
-  CheckCircle2, 
-  ArrowRight 
+  Loader2
 } from 'lucide-react';
 
 export default function Register() {
@@ -24,16 +23,24 @@ export default function Register() {
   });
 
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
 
-    const res = registerStudent(formData);
-    if (!res.success) {
-      setError(res.error);
-    } else {
-      navigate('/student');
+    try {
+      const res = await registerStudent(formData);
+      if (!res.success) {
+        setError(res.error || 'Registration failed.');
+      } else {
+        navigate('/student');
+      }
+    } catch (err) {
+      setError('Registration error. Please check your inputs and try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -144,9 +151,17 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 text-sm mt-2"
+            disabled={submitting}
+            className="w-full py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            Complete Registration & Enter Portal
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Registering Account...</span>
+              </>
+            ) : (
+              <span>Complete Registration & Enter Portal</span>
+            )}
           </button>
         </form>
 

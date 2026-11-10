@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -8,7 +8,8 @@ import {
   Sparkles, 
   ArrowRight, 
   AlertCircle,
-  Cpu
+  Cpu,
+  Loader2
 } from 'lucide-react';
 
 export default function ClubRegister() {
@@ -17,25 +18,52 @@ export default function ClubRegister() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    user_name: currentUser?.name || '',
-    user_email: currentUser?.email || '',
+    user_name: '',
+    user_email: '',
     year: '3rd Year',
     interests: '',
     note: ''
   });
 
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        user_name: currentUser.name || '',
+        user_email: currentUser.email || ''
+      }));
+    }
+  }, [currentUser]);
+
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (!formData.user_name || !formData.user_email || !formData.interests) {
       setError('Please fill out all required fields.');
       return;
     }
 
-    addClubRegistration(formData);
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      await addClubRegistration({
+        user_id: currentUser?.id || Date.now(),
+        user_name: formData.user_name,
+        user_email: formData.user_email,
+        year: formData.year,
+        interests: formData.interests,
+        note: formData.note
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError('Failed to record club registration. Please retry.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -61,7 +89,7 @@ export default function ClubRegister() {
             </div>
             <h3 className="text-xl font-bold text-white">Application Received!</h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
-              Your registration for the AI & Innovation Club has been recorded. The faculty advisor committee will review your submission and contact you via your institutional email.
+              Your registration for the AI & Innovation Club has been recorded in the database. The faculty advisor committee will review your submission and contact you via your institutional email.
             </p>
             <div className="pt-4 flex justify-center gap-3">
               <Link
@@ -150,9 +178,17 @@ export default function ClubRegister() {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/20 text-sm mt-2"
+              disabled={submitting}
+              className="w-full py-3 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-500 transition-all shadow-lg shadow-purple-600/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              Submit Club Registration
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Submitting Application...</span>
+                </>
+              ) : (
+                <span>Submit Club Application</span>
+              )}
             </button>
           </form>
         )}

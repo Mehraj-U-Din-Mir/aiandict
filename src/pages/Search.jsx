@@ -7,13 +7,13 @@ import {
   FileText, 
   Compass, 
   Bell, 
-  Award, 
   ArrowRight,
-  Layers
+  Layers,
+  BookOpen
 } from 'lucide-react';
 
 export default function Search() {
-  const { projects, documents, messages, achievements, clubShowcases } = useData();
+  const { projects, documents, messages, achievements, clubShowcases, studyMaterials } = useData();
   const [query, setQuery] = useState('');
 
   const q = query.toLowerCase().trim();
@@ -26,14 +26,20 @@ export default function Search() {
 
   const matchedDocs = !q ? [] : documents.filter(d => 
     d.title.toLowerCase().includes(q) ||
-    d.description.toLowerCase().includes(q) ||
+    (d.description && d.description.toLowerCase().includes(q)) ||
     d.category.toLowerCase().includes(q)
+  );
+
+  const matchedMaterials = !q ? [] : studyMaterials.filter(m => 
+    m.title.toLowerCase().includes(q) ||
+    (m.description && m.description.toLowerCase().includes(q)) ||
+    m.subject.toLowerCase().includes(q)
   );
 
   const matchedClub = !q ? [] : clubShowcases.filter(c => 
     c.title.toLowerCase().includes(q) ||
     c.abstract.toLowerCase().includes(q) ||
-    c.tech_stack.toLowerCase().includes(q)
+    (c.tech_stack && c.tech_stack.toLowerCase().includes(q))
   );
 
   const matchedMessages = !q ? [] : messages.filter(m => 
@@ -41,7 +47,7 @@ export default function Search() {
     m.content.toLowerCase().includes(q)
   );
 
-  const totalResults = matchedProjects.length + matchedDocs.length + matchedClub.length + matchedMessages.length;
+  const totalResults = matchedProjects.length + matchedDocs.length + matchedMaterials.length + matchedClub.length + matchedMessages.length;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -56,7 +62,7 @@ export default function Search() {
           Global Academic Search
         </h1>
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-          Instantly search across capstone repositories, official curriculum documents, faculty announcements, and innovation club prototypes.
+          Instantly search across capstone repositories, official curriculum documents, faculty announcements, study materials, and innovation club prototypes.
         </p>
       </div>
 
@@ -66,7 +72,7 @@ export default function Search() {
         <input
           type="text"
           autoFocus
-          placeholder="Type to search (e.g. YOLOv8, autonomous drone, curriculum, syllabus, grant)..."
+          placeholder="Type to search (e.g. YOLOv8, deep learning, syllabus, grant, transformer)..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 text-base pl-12 pr-4 py-4 rounded-2xl border border-slate-800 focus:outline-none focus:border-indigo-500 shadow-xl"
@@ -119,6 +125,29 @@ export default function Search() {
           </div>
         )}
 
+        {/* Study Materials */}
+        {matchedMaterials.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span>Study Materials ({matchedMaterials.length})</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {matchedMaterials.map(m => (
+                <Link
+                  key={m.id}
+                  to="/student"
+                  className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/50 transition-all space-y-2 group"
+                >
+                  <span className="text-[10px] font-bold text-purple-400 uppercase">{m.subject} • {m.target_class}</span>
+                  <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-0.5">{m.title}</h4>
+                  <p className="text-xs text-slate-400 line-clamp-2">{m.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Documents */}
         {matchedDocs.length > 0 && (
           <div className="space-y-4">
@@ -145,7 +174,7 @@ export default function Search() {
         {/* Club Showcases */}
         {matchedClub.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
               <Compass className="w-4 h-4" />
               <span>AI Club Showcases ({matchedClub.length})</span>
             </h3>
@@ -154,10 +183,10 @@ export default function Search() {
                 <Link
                   key={c.id}
                   to="/innovation-club"
-                  className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/50 transition-all space-y-2 group"
+                  className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition-all space-y-2 group"
                 >
-                  <span className="text-[10px] font-bold text-purple-400 uppercase">{c.category}</span>
-                  <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-0.5">{c.title}</h4>
+                  <span className="text-[10px] font-bold text-amber-400 uppercase">{c.category}</span>
+                  <h4 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors mt-0.5">{c.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-2">{c.abstract}</p>
                 </Link>
               ))}

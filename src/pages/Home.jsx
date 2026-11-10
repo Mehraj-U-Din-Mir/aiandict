@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, 
   Terminal, 
@@ -15,11 +16,15 @@ import {
   Compass, 
   FolderGit2,
   Bell,
-  Code
+  Code,
+  GraduationCap,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 export default function Home() {
   const { projects, achievements, messages, clubShowcases } = useData();
+  const { faculty } = useAuth();
 
   const featuredProjects = projects.filter(p => p.is_featured).slice(0, 3);
   const latestMessages = messages.slice(0, 2);
@@ -147,6 +152,95 @@ export default function Home() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* FACULTY & MENTORS DIRECTORY (Managed by Admin -> Displayed on Landing Page) */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
+              <Users className="w-4 h-4" />
+              <span>Department Mentorship & Academic Leadership</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Our Faculty & Supervisors</h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              Guiding student capstone research, publications, and competitive hackathon initiatives.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl w-fit">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Verified Faculty Registry</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {faculty.map((fac) => (
+            <div
+              key={fac.id}
+              className="rounded-3xl bg-slate-900/70 border border-slate-800 p-6 flex flex-col justify-between hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 group"
+            >
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={fac.avatar_url || '/img/nousheen.png'}
+                    alt={fac.name}
+                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/40 shrink-0 group-hover:scale-105 transition-transform"
+                    onError={(e) => { e.target.src = '/img/logo.png'; }}
+                  />
+                  <div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      {fac.designation || 'Faculty Member'}
+                    </span>
+                    <h3 className="text-base font-bold text-white mt-1 group-hover:text-indigo-300 transition-colors">
+                      {fac.name}
+                    </h3>
+                    <p className="text-xs text-indigo-400 font-medium">{fac.specialization}</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                  {fac.bio || 'Dedicated researcher and academic guide at the AI & ICT Department, Green Valley Educational Institute.'}
+                </p>
+
+                {fac.qualification && (
+                  <div className="text-[11px] text-slate-500 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800/80">
+                    <span className="text-slate-400 font-medium">Qualification:</span> {fac.qualification}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                <span className="text-slate-500 text-[11px] flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{fac.department || 'AI & ICT'}</span>
+                </span>
+
+                <div className="flex items-center gap-2">
+                  {fac.email && (
+                    <a
+                      href={`mailto:${fac.email}`}
+                      className="p-1.5 rounded-lg bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                      title={fac.email}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                  {fac.phone && (
+                    <a
+                      href={`tel:${fac.phone}`}
+                      className="p-1.5 rounded-lg bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                      title={fac.phone}
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -299,7 +393,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold text-white">Interactive Research & Learning Engines</h3>
               <p className="text-sm text-slate-300 leading-relaxed">
-                Utilize our proprietary AI Capstone Proposal Reviewer, Project Idea Synthesizer, and in-browser Python Code Laboratory with live execution.
+                Utilize our proprietary AI Capstone Proposal Reviewer, Project Idea Synthesizer, and in-browser Code Laboratory with live execution.
               </p>
             </div>
 

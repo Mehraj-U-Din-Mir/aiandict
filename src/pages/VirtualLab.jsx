@@ -3,102 +3,144 @@ import {
   Terminal, 
   Play, 
   RotateCcw, 
-  Save, 
   Copy, 
   Check, 
-  Cpu, 
   FileCode, 
   Sparkles,
-  Layers
+  Layers,
+  Cpu
 } from 'lucide-react';
 
 const LAB_TEMPLATES = [
   {
-    name: "YOLOv8 Edge Vision Simulation",
-    lang: "python",
-    code: `import numpy as np
-import time
+    name: "1. Neural Perceptron Classifier",
+    lang: "javascript",
+    code: `// Binary Classifier Perceptron with Sigmoid Activation
+function sigmoid(z) {
+  return 1 / (1 + Math.exp(-z));
+}
 
-print("[AI Lab] Initializing INT8 YOLOv8 Edge Runtime...")
-print("[AI Lab] Device target: NVIDIA Jetson Nano / TensorRT")
+// Weights and Bias initialized
+let weights = [0.65, -0.42, 0.88];
+let bias = -0.15;
 
-# Simulate frame capture from orchard canopy camera
-camera_matrix = np.random.uniform(0.1, 0.9, size=(640, 640, 3))
-print(f"[Sensors] Acquired 640x640x3 camera frame (Mean pixel intensity: {camera_matrix.mean():.3f})")
+// Sample sensor inputs [Edge Feature 1, Feature 2, Feature 3]
+const samples = [
+  { input: [0.8, 0.2, 0.9], label: "Orchard Scab Detected (Positive)" },
+  { input: [0.1, 0.9, 0.1], label: "Healthy Leaf Canopy (Negative)" },
+  { input: [0.7, 0.4, 0.6], label: "Early Stage Rust (Positive)" }
+];
 
-# Simulate inference
-start = time.time()
-print("[Inference] Passing tensors through quantized ConvNeXt backbone...")
-time.sleep(0.3)
-elapsed_ms = (time.time() - start) * 1000 + 8.4
-
-# Detection results
-detections = [
-    {"class": "Apple Foliar Scab (Early)", "confidence": 0.964, "bbox": [124, 88, 240, 192]},
-    {"class": "Cedar Rust Pathogen", "confidence": 0.912, "bbox": [310, 420, 390, 480]}
-]
-
-print(f"[Results] Found {len(detections)} plant pathologies in {elapsed_ms:.1f}ms:")
-for d in detections:
-    print(f"  -> Pathogen: {d['class']} | Confidence: {d['confidence']*100:.1f}% | BBox: {d['bbox']}")
-
-print("[Telemetry] Thermal throttle: Nominal (41.2°C). Memory footprint: 184MB.")
+console.log("=== AI Lab Perceptron Forward Inference Pass ===");
+samples.forEach((sample, idx) => {
+  let z = sample.input.reduce((sum, val, i) => sum + val * weights[i], bias);
+  let probability = sigmoid(z);
+  let predictedClass = probability >= 0.5 ? 1 : 0;
+  
+  console.log(\`Sample #\${idx + 1}:\`);
+  console.log(\`  Raw Logit (z): \${z.toFixed(4)}\`);
+  console.log(\`  Sigmoid Activation P(y=1): \${(probability * 100).toFixed(2)}%\`);
+  console.log(\`  Predicted Class: \${predictedClass} -> \${sample.label}\\n\`);
+});
 `
   },
   {
-    name: "Self-Attention Tensor Mathematics",
-    lang: "python",
-    code: `import numpy as np
+    name: "2. Scaled Dot-Product Attention Matrix",
+    lang: "javascript",
+    code: `// Self-Attention Mechanism (Transformer Core)
+function softmax(arr) {
+  const max = Math.max(...arr);
+  const exps = arr.map(x => Math.exp(x - max));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(x => x / sum);
+}
 
-def scaled_dot_product_attention(Q, K, V):
-    d_k = Q.shape[-1]
-    scores = np.matmul(Q, K.T) / np.sqrt(d_k)
-    # Softmax
-    exp_scores = np.exp(scores - np.max(scores, axis=-1, keepdims=True))
-    weights = exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
-    output = np.matmul(weights, V)
-    return output, weights
+// 3 Tokens in sequence, embedding dim = 3
+const Q = [[1, 0, 1], [0, 1, 0], [1, 1, 0]];
+const K = [[1, 0, 1], [1, 1, 0], [0, 0, 1]];
+const d_k = 3;
 
-# Sequence of 4 tokens with embedding dimension 8
-seq_len, d_model = 4, 8
-np.random.seed(42)
-Q = np.random.randn(seq_len, d_model)
-K = np.random.randn(seq_len, d_model)
-V = np.random.randn(seq_len, d_model)
+console.log("=== Scaled Dot-Product Attention Simulator ===");
+console.log("Query count: 3 tokens, Key count: 3 tokens, d_k =", d_k);
 
-print(f"[Transformer] Query tensor shape: {Q.shape}")
-print(f"[Transformer] Key tensor shape: {K.shape}")
-print(f"[Transformer] Value tensor shape: {V.shape}")
+const attentionWeights = [];
+for (let i = 0; i < Q.length; i++) {
+  const scores = [];
+  for (let j = 0; j < K.length; j++) {
+    // Dot product Q_i . K_j
+    let dot = 0;
+    for (let k = 0; k < d_k; k++) {
+      dot += Q[i][k] * K[j][k];
+    }
+    // Scale by sqrt(d_k)
+    scores.push(dot / Math.sqrt(d_k));
+  }
+  attentionWeights.push(softmax(scores));
+}
 
-output, attn_matrix = scaled_dot_product_attention(Q, K, V)
-print("\n[Softmax Weights] Attention Alignment Matrix:")
-print(np.round(attn_matrix, 3))
-
-print("\n[Context Vector] Output Representation:")
-print(np.round(output[:2], 3))
+console.log("\\nSoftmax Attention Alignment Matrix (3x3):");
+attentionWeights.forEach((row, i) => {
+  console.log(\`Token \${i + 1} Attention -> [\${row.map(v => v.toFixed(3)).join(", ")}]\`);
+});
 `
   },
   {
-    name: "eBPF Socket Flow Monitor",
-    lang: "python",
-    code: `# eBPF Kernel Probe Telemetry Simulator
-import time
+    name: "3. Computer Vision IOU & Bounding Box Filter",
+    lang: "javascript",
+    code: `// Intersection Over Union (IoU) Evaluator for Edge Vision
+function calculateIoU(boxA, boxB) {
+  // Box format: [x1, y1, x2, y2]
+  const xA = Math.max(boxA[0], boxB[0]);
+  const yA = Math.max(boxA[1], boxB[1]);
+  const xB = Math.min(boxA[2], boxB[2]);
+  const yB = Math.min(boxA[3], boxB[3]);
 
-print("[Kernel] Attaching tracepoint to sock:sock_set_state...")
-print("[eBPF] In-kernel ring buffer initialized with 4096 pages.")
+  const interArea = Math.max(0, xB - xA) * Math.max(0, yB - yA);
+  const boxAArea = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1]);
+  const boxBArea = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1]);
 
-simulated_events = [
-    {"proto": "TCP", "saddr": "192.168.1.42:54820", "daddr": "8.8.8.8:53", "action": "PASS", "rtt_ms": 1.2},
-    {"proto": "UDP", "saddr": "192.168.1.109:4120", "daddr": "198.51.100.12:4444", "action": "FLAGGED", "rtt_ms": 142.1},
-    {"proto": "TCP", "saddr": "192.168.1.42:54822", "daddr": "104.244.42.1:443", "action": "PASS", "rtt_ms": 3.8}
-]
+  return interArea / (boxAArea + boxBArea - interArea);
+}
 
-print("[Sentinel] In-line spatio-temporal GNN active:")
-for ev in simulated_events:
-    tag = "[ALERT: COVERT DNS TUNNEL]" if ev["action"] == "FLAGGED" else "[NOMINAL]"
-    print(f" {tag} {ev['proto']} {ev['saddr']} -> {ev['daddr']} (RTT: {ev['rtt_ms']}ms)")
+const groundTruth = [50, 50, 200, 200];
+const yoloPrediction = [60, 55, 205, 195];
 
-print("\n[Verdict] 1 suspicious covert egress flow isolated in sub-40ms.")
+console.log("=== Edge Vision Detection Benchmarking ===");
+console.log("Ground Truth BBox:", groundTruth);
+console.log("YOLOv8 Detection BBox:", yoloPrediction);
+
+const iou = calculateIoU(groundTruth, yoloPrediction);
+console.log("\\nCalculated IoU Score:", (iou * 100).toFixed(2) + "%");
+
+if (iou > 0.70) {
+  console.log("Verdict: EXCELLENT OVERLAP (Meets VOC benchmark standard > 0.5)");
+} else {
+  console.log("Verdict: LOW OVERLAP (Candidate for Non-Maximum Suppression pruning)");
+}
+`
+  },
+  {
+    name: "4. Tokenizer & Vocabulary Indexer",
+    lang: "javascript",
+    code: `// Regional NLP Subword Tokenizer Simulation
+const text = "Artificial intelligence empowers researchers in Kashmir to innovate autonomous robotics.";
+console.log("Original Text:\\n" + text);
+
+// Normalization & Tokenization
+const tokens = text.toLowerCase().replace(/[^a-z0-9\\s]/g, "").split(/\\s+/);
+console.log("\\nToken Count:", tokens.length);
+
+const vocabulary = Array.from(new Set(tokens)).sort();
+console.log("Unique Vocabulary Size:", vocabulary.length);
+
+const tokenToId = {};
+vocabulary.forEach((word, index) => {
+  tokenToId[word] = index + 101; // offset like BERT
+});
+
+const encodedSequence = tokens.map(t => tokenToId[t]);
+console.log("\\nEncoded Token IDs Sequence:");
+console.log(encodedSequence.join(" -> "));
 `
   }
 ];
@@ -106,7 +148,7 @@ print("\n[Verdict] 1 suspicious covert egress flow isolated in sub-40ms.")
 export default function VirtualLab() {
   const [selectedTemplateIdx, setSelectedTemplateIdx] = useState(0);
   const [code, setCode] = useState(LAB_TEMPLATES[0].code);
-  const [output, setOutput] = useState("[AI Lab Console] Ready. Click 'Execute Code' to run script in sandbox.");
+  const [output, setOutput] = useState("[AI Lab Console] Ready. Click 'Execute Code' to run script in in-browser JavaScript sandbox.");
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -118,55 +160,34 @@ export default function VirtualLab() {
 
   const handleRunCode = () => {
     setRunning(true);
-    setOutput("[AI Lab Runtime] Compiling execution sandbox and allocating tensors...");
-
-    setTimeout(() => {
-      // Simulate real output
-      if (selectedTemplateIdx === 0) {
-        setOutput(
-`[AI Lab] Initializing INT8 YOLOv8 Edge Runtime...
-[AI Lab] Device target: NVIDIA Jetson Nano / TensorRT
-[Sensors] Acquired 640x640x3 camera frame (Mean pixel intensity: 0.491)
-[Inference] Passing tensors through quantized ConvNeXt backbone...
-[Results] Found 2 plant pathologies in 18.2ms:
-  -> Pathogen: Apple Foliar Scab (Early) | Confidence: 96.4% | BBox: [124, 88, 240, 192]
-  -> Pathogen: Cedar Rust Pathogen | Confidence: 91.2% | BBox: [310, 420, 390, 480]
-[Telemetry] Thermal throttle: Nominal (41.2°C). Memory footprint: 184MB.
-[Sandbox Exit Code 0] Execution completed successfully in 0.384s.`
-        );
-      } else if (selectedTemplateIdx === 1) {
-        setOutput(
-`[Transformer] Query tensor shape: (4, 8)
-[Transformer] Key tensor shape: (4, 8)
-[Transformer] Value tensor shape: (4, 8)
-
-[Softmax Weights] Attention Alignment Matrix:
-[[0.312 0.218 0.285 0.185]
- [0.198 0.412 0.174 0.216]
- [0.245 0.190 0.382 0.183]
- [0.189 0.254 0.201 0.356]]
-
-[Context Vector] Output Representation:
-[[-0.412  0.884 -0.129  0.301 -0.551  0.722 -0.318  0.491]
- [ 0.119 -0.321  0.781 -0.442  0.298 -0.112  0.640 -0.219]]
-
-[Sandbox Exit Code 0] Execution completed successfully in 0.192s.`
-        );
-      } else {
-        setOutput(
-`[Kernel] Attaching tracepoint to sock:sock_set_state...
-[eBPF] In-kernel ring buffer initialized with 4096 pages.
-[Sentinel] In-line spatio-temporal GNN active:
- [NOMINAL] TCP 192.168.1.42:54820 -> 8.8.8.8:53 (RTT: 1.2ms)
- [ALERT: COVERT DNS TUNNEL] UDP 192.168.1.109:4120 -> 198.51.100.12:4444 (RTT: 142.1ms)
- [NOMINAL] TCP 192.168.1.42:54822 -> 104.244.42.1:443 (RTT: 3.8ms)
-
-[Verdict] 1 suspicious covert egress flow isolated in sub-40ms.
-[Sandbox Exit Code 0] Kernel probe executed cleanly in 0.248s.`
-        );
+    const logs = [];
+    const customConsole = {
+      log: (...args) => {
+        logs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' '));
+      },
+      error: (...args) => {
+        logs.push('[ERROR] ' + args.join(' '));
+      },
+      warn: (...args) => {
+        logs.push('[WARN] ' + args.join(' '));
       }
+    };
+
+    const startTime = performance.now();
+
+    try {
+      // Execute within a safe scoped function providing custom console
+      const runSandbox = new Function('console', code);
+      runSandbox(customConsole);
+      const elapsed = (performance.now() - startTime).toFixed(2);
+      
+      const resultText = logs.length > 0 ? logs.join('\n') : '[Execution completed with no console output]';
+      setOutput(resultText + `\n\n[Runtime Telemetry] Execution finished in ${elapsed}ms • Status: 0 OK`);
+    } catch (err) {
+      setOutput(`[Syntax/Runtime Error]: ${err.message}\n${err.stack || ''}`);
+    } finally {
       setRunning(false);
-    }, 700);
+    }
   };
 
   const copyCode = () => {
@@ -188,7 +209,7 @@ export default function VirtualLab() {
           Virtual Code Laboratory
         </h1>
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-          Interactive in-browser Python runtime simulator. Test Transformer attention models, edge computer vision pipelines, and eBPF kernel monitors in real time.
+          Interactive client-side execution sandbox. Test Neural Perceptrons, Transformer Attention, Computer Vision IoU metrics, and Tokenizers directly in your browser with real-time logs.
         </p>
       </div>
 
@@ -200,6 +221,7 @@ export default function VirtualLab() {
           {LAB_TEMPLATES.map((tmpl, idx) => (
             <button
               key={tmpl.name}
+              type="button"
               onClick={() => handleTemplateChange(idx)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 selectedTemplateIdx === idx
@@ -215,6 +237,7 @@ export default function VirtualLab() {
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={copyCode}
             className="p-2 rounded-lg bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
             title="Copy Code"
@@ -222,6 +245,7 @@ export default function VirtualLab() {
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
           <button
+            type="button"
             onClick={() => handleTemplateChange(selectedTemplateIdx)}
             className="p-2 rounded-lg bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
             title="Reset Code"
@@ -229,6 +253,7 @@ export default function VirtualLab() {
             <RotateCcw className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={handleRunCode}
             disabled={running}
             className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2 transition-all shadow-md shadow-emerald-600/25 disabled:opacity-50"
@@ -247,16 +272,16 @@ export default function VirtualLab() {
           <div className="flex items-center justify-between px-5 py-3 bg-slate-900/90 border-b border-slate-800 text-xs">
             <div className="flex items-center gap-2 text-slate-300 font-mono">
               <FileCode className="w-4 h-4 text-emerald-400" />
-              <span>experiment.py</span>
+              <span>experiment.js</span>
             </div>
-            <span className="text-[11px] text-slate-500 font-mono">Python 3.10 • NumPy • TensorRT</span>
+            <span className="text-[11px] text-slate-500 font-mono">Real-Time JavaScript Sandbox</span>
           </div>
           
           <div className="p-4 flex-1">
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full h-[420px] bg-transparent text-slate-200 font-mono text-xs leading-relaxed focus:outline-none resize-none"
+              className="w-full h-[450px] bg-transparent text-slate-200 font-mono text-xs leading-relaxed focus:outline-none resize-none"
               spellCheck="false"
             />
           </div>
@@ -275,7 +300,7 @@ export default function VirtualLab() {
             </span>
           </div>
 
-          <div className="p-5 flex-1 bg-black/60 font-mono text-xs leading-relaxed overflow-y-auto max-h-[420px]">
+          <div className="p-5 flex-1 bg-black/70 font-mono text-xs leading-relaxed overflow-y-auto max-h-[450px]">
             <pre className="text-emerald-400 whitespace-pre-wrap">{output}</pre>
           </div>
         </div>

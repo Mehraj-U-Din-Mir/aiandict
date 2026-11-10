@@ -550,3 +550,68 @@ VALUES
     FALSE,
     89
 );
+
+-- ==============================================================================
+-- 14. STUDY MATERIALS TABLE (Uploaded by Admin/Faculty -> Displayed on Student Dashboard)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS study_materials (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    subject VARCHAR(150) NOT NULL DEFAULT 'General',
+    description TEXT,
+    file_url TEXT NOT NULL,
+    file_type VARCHAR(50) DEFAULT 'pdf',
+    target_class VARCHAR(150) DEFAULT 'All',
+    uploaded_by BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_study_materials_subject ON study_materials(subject);
+CREATE INDEX IF NOT EXISTS idx_study_materials_class ON study_materials(target_class);
+
+ALTER TABLE study_materials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can view study materials" ON study_materials FOR SELECT USING (true);
+CREATE POLICY "Faculty and admin can insert study materials" ON study_materials FOR INSERT WITH CHECK (true);
+CREATE POLICY "Faculty and admin can delete study materials" ON study_materials FOR DELETE USING (true);
+
+INSERT INTO study_materials (title, subject, description, file_url, file_type, target_class, uploaded_by)
+VALUES
+(
+    'Deep Learning & Convolutional Neural Networks Lecture Notes',
+    'Deep Learning',
+    'Comprehensive notes covering CNN backbones (ResNet, ConvNeXt, EfficientNet), loss functions, backpropagation calculus, and PyTorch implementations.',
+    '/docs/GVEI_ICT_Curriculum_Planning_Syllabus_Progress_2026-2027.pdf',
+    'pdf',
+    'B.Tech AI 3rd Year',
+    1
+),
+(
+    'Transformer Architectures & Attention Mechanisms Handbook',
+    'Natural Language Processing',
+    'Complete mathematical derivations of Scaled Dot-Product Attention, Multi-Head Attention, RoPE positional encodings, and LoRA fine-tuning.',
+    '/docs/GVEI_ICT_Lesson_Plans_Classroom_Practices_Teaching_Innovation_2026-2027.pdf',
+    'pdf',
+    'B.Tech AI 4th Year',
+    1
+),
+(
+    'Embedded Systems, ESP32 & Edge AI Sensor Interfacing',
+    'IoT & Embedded AI',
+    'Laboratory manual for interfacing I2C/SPI sensors, ESP-NOW protocols, TinyML quantization, and FreeRTOS tasks.',
+    '/docs/GVEI_ICT_Computer_Laboratory_Infrastructure_Integration_2026-2027.pdf',
+    'pdf',
+    'B.Tech AI 2nd Year',
+    1
+),
+(
+    'AI Ethics, Algorithmic Bias & Fair Governance Rubrics',
+    'AI Ethics & Policy',
+    'Guidelines and case studies on model interpretability, bias evaluation datasets, responsible disclosure, and AI compliance.',
+    '/docs/GVEI_ICT_CREATE_Competency_Driven_Framework_2026-2027.pdf',
+    'pdf',
+    'All',
+    1
+)
+ON CONFLICT DO NOTHING;
+

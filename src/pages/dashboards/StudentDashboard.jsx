@@ -13,14 +13,25 @@ import {
   ExternalLink, 
   Github,
   X,
-  FileText
+  FileText,
+  BookOpen,
+  Download,
+  Eye,
+  Search,
+  User,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { currentUser } = useAuth();
-  const { projects, addProject, clubRegistrations } = useData();
+  const { projects, addProject, clubRegistrations, studyMaterials } = useData();
 
+  const [activeTab, setActiveTab] = useState('projects'); // 'projects', 'materials', 'club'
   const [modalOpen, setModalOpen] = useState(false);
+  const [previewMaterial, setPreviewMaterial] = useState(null);
+  const [studyFilter, setStudyFilter] = useState('All');
+  const [studySearch, setStudySearch] = useState('');
+
   const [newProject, setNewProject] = useState({
     title: '',
     category: 'Computer Vision',
@@ -33,14 +44,21 @@ export default function StudentDashboard() {
     faculty_name: 'Er. Mehraj U Din Mir'
   });
 
-  const myProjects = projects.filter(p => p.student_id === currentUser?.id || p.student_name === currentUser?.name);
-  const myClubStatus = clubRegistrations.find(r => r.user_email === currentUser?.email);
+  const myProjects = projects.filter(p => 
+    p.student_id === currentUser?.id || 
+    (currentUser?.name && p.student_name?.toLowerCase().includes(currentUser.name.toLowerCase()))
+  );
 
-  const handleCreateProject = (e) => {
+  const myClubStatus = clubRegistrations.find(r => 
+    r.user_email === currentUser?.email || 
+    (currentUser?.name && r.user_name?.toLowerCase().includes(currentUser.name.toLowerCase()))
+  );
+
+  const handleCreateProject = async (e) => {
     e.preventDefault();
-    addProject({
+    await addProject({
       ...newProject,
-      student_id: currentUser?.id || 6,
+      student_id: currentUser?.id || Date.now(),
       student_name: currentUser?.name || 'Student Researcher'
     });
     setModalOpen(false);
@@ -56,6 +74,18 @@ export default function StudentDashboard() {
       faculty_name: 'Er. Mehraj U Din Mir'
     });
   };
+
+  const filteredMaterials = studyMaterials.filter(m => {
+    const matchFilter = studyFilter === 'All' || m.subject === studyFilter || m.target_class === studyFilter;
+    const q = studySearch.toLowerCase().trim();
+    const matchQuery = !q || 
+      m.title.toLowerCase().includes(q) || 
+      (m.description && m.description.toLowerCase().includes(q)) ||
+      m.subject.toLowerCase().includes(q);
+    return matchFilter && matchQuery;
+  });
+
+  const subjects = ['All', ...Array.from(new Set(studyMaterials.map(m => m.subject)))];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -73,7 +103,7 @@ export default function StudentDashboard() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white">{currentUser?.name}</h1>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
-                Student
+                Student Researcher
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -99,117 +129,295 @@ export default function StudentDashboard() {
             className="px-5 py-2.5 rounded-xl font-bold text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 flex items-center gap-2 transition-all"
           >
             <Compass className="w-4 h-4" />
-            <span>{myClubStatus ? `Club Status: ${myClubStatus.status}` : "Enroll in AI Club"}</span>
+            <span>{myClubStatus ? `Club: ${myClubStatus.status}` : "Enroll in AI Club"}</span>
           </Link>
         </div>
       </div>
 
-      {/* Capstone Proposals Table / Cards */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <FolderGit2 className="w-5 h-5 text-indigo-400" />
-              <span>My Capstone Submissions ({myProjects.length})</span>
-            </h2>
-            <p className="text-xs text-slate-400">Track faculty reviews, revisions, and grading scores</p>
-          </div>
-        </div>
+      {/* Dashboard Tabs */}
+      <div className="flex gap-2 border-b border-slate-800 pb-3 overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setActiveTab('projects')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            activeTab === 'projects' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          My Capstone Submissions ({myProjects.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('materials')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            activeTab === 'materials' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          Study Materials & Handouts ({studyMaterials.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('club')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            activeTab === 'club' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          Innovation Club Membership
+        </button>
+      </div>
 
-        {myProjects.length === 0 ? (
-          <div className="p-12 text-center rounded-3xl bg-slate-900/50 border border-slate-800 space-y-4">
-            <FileText className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-base font-bold text-white">No Proposals Submitted Yet</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              You haven't submitted any capstone abstracts for the current session. Click below to draft your first submission.
-            </p>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white"
-            >
-              Submit Capstone Proposal
-            </button>
+      {/* TAB 1: Capstone Submissions */}
+      {activeTab === 'projects' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FolderGit2 className="w-5 h-5 text-indigo-400" />
+                <span>My Capstone Submissions</span>
+              </h2>
+              <p className="text-xs text-slate-400">Track faculty reviews, revisions, and grading scores</p>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {myProjects.map(proj => (
-              <div
-                key={proj.id}
-                className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 hover:border-indigo-500/40 transition-all space-y-4"
+
+          {myProjects.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl bg-slate-900/50 border border-slate-800 space-y-4">
+              <FileText className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">No Proposals Submitted Yet</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                You haven't submitted any capstone abstracts for the current session. Click below to draft your first submission.
+              </p>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                      {proj.category}
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
-                      proj.status === 'Approved'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : proj.status === 'Needs Revision'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                    }`}>
-                      {proj.status}
-                    </span>
-                  </div>
+                Submit Capstone Proposal
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myProjects.map(proj => (
+                <div
+                  key={proj.id}
+                  className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 hover:border-indigo-500/40 transition-all space-y-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                        {proj.category}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                        proj.status === 'Approved'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : proj.status === 'Needs Revision'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                      }`}>
+                        {proj.status}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-3">
                     {proj.score && (
-                      <span className="text-xs font-bold text-indigo-400">
-                        Score: {proj.score}/100
-                      </span>
-                    )}
-                    {proj.grade && proj.grade !== 'Pending' && (
-                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-300">
-                        Grade {proj.grade}
+                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-950 border border-slate-800 text-indigo-300">
+                        Score: {proj.score}/100 • Grade: {proj.grade}
                       </span>
                     )}
                   </div>
-                </div>
 
-                <div>
-                  <h3 className="text-lg font-bold text-white">{proj.title}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed mt-1">{proj.abstract}</p>
-                </div>
-
-                {proj.feedback && (
-                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs">
-                    <span className="text-indigo-400 font-bold block mb-1">Supervisor Feedback:</span>
-                    <p className="text-slate-300 italic">"{proj.feedback}"</p>
-                    <span className="text-slate-500 text-[11px] block text-right mt-1">— {proj.faculty_name}</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{proj.title}</h3>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{proj.abstract}</p>
                   </div>
-                )}
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800/80">
-                  <span className="text-slate-400 font-mono text-[11px]">
-                    Stack: {proj.tech_stack}
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs flex flex-wrap gap-4 text-slate-400">
+                    <div>Supervisor: <strong className="text-slate-200">{proj.faculty_name}</strong></div>
+                    <div>Tech Stack: <strong className="text-slate-200">{proj.tech_stack}</strong></div>
+                    <div>Submitted: <strong className="text-slate-200">{proj.created_at}</strong></div>
+                  </div>
+
+                  {proj.feedback && (
+                    <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs">
+                      <span className="text-indigo-300 font-bold block mb-1">Supervisor Assessment Feedback:</span>
+                      <p className="text-slate-200">{proj.feedback}</p>
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex justify-end">
+                    <Link
+                      to={`/project/${proj.id}`}
+                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                    >
+                      <span>View Full Project Overview</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: STUDY MATERIALS (Uploaded by Admin & Faculty -> Displayed to Student) */}
+      {/* ========================================================================= */}
+      {activeTab === 'materials' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-purple-400" />
+                <span>Department Study Materials & Lecture Handouts</span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Official notes, syllabus handbooks, and laboratory guides uploaded by department faculty
+              </p>
+            </div>
+            
+            <div className="relative max-w-xs">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search notes & topics..."
+                value={studySearch}
+                onChange={(e) => setStudySearch(e.target.value)}
+                className="w-full bg-slate-900 text-slate-200 text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {subjects.map(s => (
+              <button
+                key={s}
+                onClick={() => setStudyFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  studyFilter === s
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          {/* Study Materials Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMaterials.map(mat => (
+              <div
+                key={mat.id}
+                className="rounded-3xl bg-slate-900/70 border border-slate-800 p-6 flex flex-col justify-between hover:border-purple-500/40 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                      {mat.subject}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {mat.target_class}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-1">
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors leading-snug">
+                        {mat.title}
+                      </h3>
+                      <div className="text-[11px] text-slate-500 mt-0.5">By {mat.uploader_name}</div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                    {mat.description}
+                  </p>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 text-[11px]">
+                    {mat.created_at}
                   </span>
-                  <Link
-                    to={`/project/${proj.id}`}
-                    className="text-indigo-400 hover:text-indigo-300 font-semibold"
-                  >
-                    View Details →
-                  </Link>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMaterial(mat)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-950 text-slate-300 hover:text-white border border-slate-800 flex items-center gap-1.5 transition-colors font-medium text-xs"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-purple-400" />
+                      <span>View</span>
+                    </button>
+                    <a
+                      href={mat.file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3.5 py-1.5 rounded-lg font-semibold bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20 text-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* New Project Submission Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-2xl my-8 p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      {/* TAB 3: Club Membership */}
+      {activeTab === 'club' && (
+        <div className="p-8 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Compass className="w-6 h-6 text-purple-400" />
               <div>
-                <h3 className="text-lg font-bold text-white">Submit New Capstone Proposal</h3>
-                <p className="text-xs text-slate-400">Department of AI & ICT • Session 2026–2027</p>
+                <h3 className="text-lg font-bold text-white">AI & Innovation Club Status</h3>
+                <p className="text-xs text-slate-400">Department Incubation Cell • Mentored by Er. Mehraj U Din Mir</p>
               </div>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+            </div>
+            <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+              myClubStatus?.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+            }`}>
+              {myClubStatus?.status || 'Not Enrolled'}
+            </span>
+          </div>
+
+          {myClubStatus ? (
+            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+              <div>Member: <strong className="text-white">{myClubStatus.user_name}</strong></div>
+              <div>Academic Year: <strong className="text-white">{myClubStatus.year}</strong></div>
+              <div>Focus Areas: <strong className="text-purple-300">{myClubStatus.interests}</strong></div>
+              {myClubStatus.note && (
+                <div>Statement: <span className="text-slate-400 italic">"{myClubStatus.note}"</span></div>
+              )}
+            </div>
+          ) : (
+            <div className="p-8 text-center rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <Compass className="w-10 h-10 text-purple-400 mx-auto" />
+              <h4 className="text-base font-bold text-white">You have not applied for the AI Club yet</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Join our regional aerial robotics, LLM research cohorts, and competitive hackathon teams.
+              </p>
+              <Link
+                to="/club-register"
+                className="inline-block px-5 py-2.5 rounded-xl text-xs font-bold bg-purple-600 text-white"
               >
+                Register for Club
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Capstone Proposal Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Plus className="w-5 h-5 text-indigo-400" />
+                <span>Submit Capstone Proposal</span>
+              </h3>
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -220,7 +428,7 @@ export default function StudentDashboard() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Real-Time Deep Learning Micro-UAV for Forest Fire Telemetry"
+                  placeholder="e.g. Kashmiri Sign Language Real-Time Hand Landmark Translator"
                   value={newProject.title}
                   onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
                   className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
@@ -229,7 +437,7 @@ export default function StudentDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Research Domain *</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Category</label>
                   <select
                     value={newProject.category}
                     onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
@@ -244,29 +452,25 @@ export default function StudentDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Faculty Supervisor *</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Faculty Supervisor</label>
                   <select
                     value={newProject.faculty_name}
-                    onChange={(e) => {
-                      const name = e.target.value;
-                      const fid = name.includes('Mehraj') ? 3 : name.includes('Salman') ? 4 : 5;
-                      setNewProject({ ...newProject, faculty_name: name, faculty_id: fid });
-                    }}
+                    onChange={(e) => setNewProject({ ...newProject, faculty_name: e.target.value })}
                     className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="Er. Mehraj U Din Mir">Er. Mehraj U Din Mir (HOD AI & ICT GVEI)</option>
-                    <option value="Prof. Salman Ahmed">Prof. Salman Ahmed (Associate Professor)</option>
-                    <option value="Engr. Zara Malik">Engr. Zara Malik (Assistant Professor)</option>
+                    <option value="Er. Mehraj U Din Mir">Er. Mehraj U Din Mir (HOD AI & ICT)</option>
+                    <option value="Prof. Salman Ahmed">Prof. Salman Ahmed (IoT & Robotics)</option>
+                    <option value="Engr. Zara Malik">Engr. Zara Malik (AI Ethics & LLMs)</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Executive Abstract *</label>
+                <label className="block text-slate-300 font-semibold mb-1">Abstract & Problem Statement *</label>
                 <textarea
                   rows="3"
                   required
-                  placeholder="Summarize the core technical problem, dataset, and target solution..."
+                  placeholder="Describe the real-world regional or global challenge your proposal tackles..."
                   value={newProject.abstract}
                   onChange={(e) => setNewProject({ ...newProject, abstract: e.target.value })}
                   className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
@@ -274,22 +478,21 @@ export default function StudentDashboard() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Methodology & Edge Architecture</label>
+                <label className="block text-slate-300 font-semibold mb-1">Proposed Methodology & Architecture</label>
                 <textarea
                   rows="2"
-                  placeholder="e.g. TensorRT INT8 Quantization -> Zero-copy memory buffer -> Drone flight controller"
+                  placeholder="Pipeline: Dataset collection -> Model Architecture -> Evaluation metrics..."
                   value={newProject.methodology}
                   onChange={(e) => setNewProject({ ...newProject, methodology: e.target.value })}
-                  className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Tech Stack *</label>
+                <label className="block text-slate-300 font-semibold mb-1">Tech Stack</label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Python, PyTorch, YOLOv8, ROS2, Jetson Nano"
+                  placeholder="e.g. PyTorch, YOLOv8, MediaPipe, OpenCV, FastAPI"
                   value={newProject.tech_stack}
                   onChange={(e) => setNewProject({ ...newProject, tech_stack: e.target.value })}
                   className="w-full bg-slate-950 text-slate-100 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
@@ -298,7 +501,7 @@ export default function StudentDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">GitHub Repo URL</label>
+                  <label className="block text-slate-300 font-semibold mb-1">GitHub Repo URL (Optional)</label>
                   <input
                     type="url"
                     placeholder="https://github.com/..."
@@ -309,7 +512,7 @@ export default function StudentDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Demo / Simulation URL</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Live Demo / Video URL (Optional)</label>
                   <input
                     type="url"
                     placeholder="https://..."
@@ -320,22 +523,70 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-500 text-white"
+                  className="px-5 py-2 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20"
                 >
-                  Submit for Faculty Review
+                  Submit Proposal
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Study Material Reader Modal */}
+      {previewMaterial && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-800 flex items-start justify-between gap-4">
+              <div>
+                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  {previewMaterial.subject}
+                </span>
+                <h3 className="text-lg font-bold text-white mt-1">{previewMaterial.title}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Target: {previewMaterial.target_class} • Uploaded by: {previewMaterial.uploader_name}</p>
+              </div>
+              <button onClick={() => setPreviewMaterial(null)} className="text-slate-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto space-y-4">
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <span className="text-purple-400 font-semibold block mb-1">Handout Overview:</span>
+                <p className="text-slate-200 leading-relaxed">{previewMaterial.description}</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
+                <iframe
+                  src={previewMaterial.file_url}
+                  title={previewMaterial.title}
+                  className="w-full h-[450px]"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between text-xs">
+              <span className="text-slate-400">Official Department Study Resource</span>
+              <a
+                href={previewMaterial.file_url}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl font-bold bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5"
+              >
+                <Download className="w-4 h-4" />
+                <span>Open / Download File</span>
+              </a>
+            </div>
           </div>
         </div>
       )}

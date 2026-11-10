@@ -532,3 +532,56 @@ export const initialParticipations = [
     created_at: "2025-10-13"
   }
 ];
+
+export const initialStudyMaterials = [
+  {
+    id: 1,
+    title: "Deep Learning & Convolutional Neural Networks Lecture Notes",
+    subject: "Deep Learning",
+    description: "Comprehensive notes covering CNN backbones (ResNet, ConvNeXt, EfficientNet), loss functions, backpropagation calculus, and PyTorch implementations.",
+    file_url: "/docs/GVEI_ICT_Curriculum_Planning_Syllabus_Progress_2026-2027.pdf",
+    file_type: "pdf",
+    target_class: "B.Tech AI 3rd Year",
+    uploaded_by: 3,
+    uploader_name: "Er. Mehraj U Din Mir",
+    created_at: "2025-09-10"
+  },
+  {
+    id: 2,
+    title: "Transformer Architectures & Attention Mechanisms Handbook",
+    subject: "Natural Language Processing",
+    description: "Complete mathematical derivations of Scaled Dot-Product Attention, Multi-Head Attention, RoPE positional encodings, and LoRA fine-tuning.",
+    file_url: "/docs/GVEI_ICT_Lesson_Plans_Classroom_Practices_Teaching_Innovation_2026-2027.pdf",
+    file_type: "pdf",
+    target_class: "B.Tech AI 4th Year",
+    uploaded_by: 3,
+    uploader_name: "Er. Mehraj U Din Mir",
+    created_at: "2025-09-15"
+  },
+  {
+    id: 3,
+    title: "Embedded Systems, ESP32 & Edge AI Sensor Interfacing",
+    subject: "IoT & Embedded AI",
+    description: "Laboratory manual for interfacing I2C/SPI sensors, ESP-NOW protocols, TinyML quantization, and FreeRTOS tasks.",
+    file_url: "/docs/GVEI_ICT_Computer_Laboratory_Infrastructure_Integration_2026-2027.pdf",
+    file_type: "pdf",
+    target_class: "B.Tech AI 2nd Year",
+    uploaded_by: 4,
+    uploader_name: "Prof. Salman Ahmed",
+    created_at: "2025-09-22"
+  },
+  {
+    id: 4,
+    title: "AI Ethics, Algorithmic Bias & Fair Governance Rubrics",
+    subject: "AI Ethics & Policy",
+    description: "Guidelines and case studies on model interpretability, bias evaluation datasets, responsible disclosure, and AI compliance.",
+    file_url: "/docs/GVEI_ICT_CREATE_Competency_Driven_Framework_2026-2027.pdf",
+    file_type: "pdf",
+    target_class: "All",
+    uploaded_by: 5,
+    uploader_name: "Engr. Zara Malik",
+    created_at: "2025-10-01"
+  }
+];
+
+

@@ -8,7 +8,7 @@ import {
   ShieldCheck, 
   AlertCircle, 
   Sparkles,
-  ArrowRight
+  Loader2
 } from 'lucide-react';
 
 export default function Login() {
@@ -21,6 +21,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -45,24 +46,42 @@ export default function Login() {
     setError('');
   }, [activeTab]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const res = login(email, password, activeTab);
-    if (!res.success) {
-      setError(res.error);
-    } else {
-      if (res.user.role === 'admin') navigate('/admin');
-      else if (res.user.role === 'faculty') navigate('/faculty');
-      else navigate('/student');
+    setSubmitting(true);
+
+    try {
+      const res = await login(email, password, activeTab);
+      if (!res.success) {
+        setError(res.error || 'Authentication failed. Please verify credentials.');
+      } else {
+        if (res.user.role === 'admin') navigate('/admin');
+        else if (res.user.role === 'faculty') navigate('/faculty');
+        else navigate('/student');
+      }
+    } catch (err) {
+      setError('An error occurred during authentication. Please retry.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleQuickLogin = (roleTarget) => {
-    quickLoginAs(roleTarget);
-    if (roleTarget === 'admin') navigate('/admin');
-    else if (roleTarget === 'faculty') navigate('/faculty');
-    else navigate('/student');
+  const handleQuickLogin = async (roleTarget) => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const user = await quickLoginAs(roleTarget);
+      if (user) {
+        if (user.role === 'admin') navigate('/admin');
+        else if (user.role === 'faculty') navigate('/faculty');
+        else navigate('/student');
+      } else {
+        setError(`Unable to quick-switch to ${roleTarget}.`);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -80,6 +99,7 @@ export default function Login() {
         {/* Role Tabs */}
         <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-bold">
           <button
+            type="button"
             onClick={() => setActiveTab('student')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'student' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
@@ -89,6 +109,7 @@ export default function Login() {
             <span>Student</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('faculty')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'faculty' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
@@ -98,6 +119,7 @@ export default function Login() {
             <span>Faculty</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('admin')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
@@ -140,9 +162,17 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 text-sm mt-2"
+            disabled={submitting}
+            className="w-full py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            Sign In as {activeTab.toUpperCase()}
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              <span>Sign In as {activeTab.toUpperCase()}</span>
+            )}
           </button>
         </form>
 
@@ -150,8 +180,10 @@ export default function Login() {
         <div className="pt-2 border-t border-slate-800 space-y-2">
           <div className="text-[11px] text-slate-500 text-center">Fast Demo Testing:</div>
           <button
+            type="button"
             onClick={() => handleQuickLogin(activeTab)}
-            className="w-full py-2 rounded-xl text-xs font-semibold bg-slate-950 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-950/40 transition-colors flex items-center justify-center gap-1.5"
+            disabled={submitting}
+            className="w-full py-2 rounded-xl text-xs font-semibold bg-slate-950 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-950/40 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>Instant Demo Sign-In as {activeTab}</span>

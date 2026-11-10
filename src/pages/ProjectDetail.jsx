@@ -19,7 +19,7 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const { projects } = useData();
 
-  const project = projects.find(p => p.id === Number(id));
+  const project = projects.find(p => String(p.id) === String(id));
 
   if (!project) {
     return (
@@ -217,3 +217,4 @@ export default function ProjectDetail() {
     </div>
   );
 }
+
