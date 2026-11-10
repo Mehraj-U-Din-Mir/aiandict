@@ -1,104 +1,63 @@
-# AI & ICT Department Portal 🎓⚡
+# AI & ICT Department Portal 🎓⚡ (React Edition)
 
-A modern, full-stack educational and departmental web portal for the **Department of Artificial Intelligence & Information and Communication Technology (AI & ICT)**. Built with **Flask**, **SQLite / Supabase PostgreSQL**, **Three.js**, and integrated **Generative AI** tools for student project mentorship, capstone proposal evaluation, and departmental resource governance.
+A modern, highly robust full-stack single-page application (SPA) for the **Department of Artificial Intelligence & Information and Communication Technology (AI & ICT)** at Green Valley Educational Institute (GVEI).
+
+Built with **React 18**, **Vite**, **Tailwind CSS**, and **Lucide Icons**, featuring complete departmental governance, capstone project evaluation, generative AI academic tools, virtual code laboratories, and multi-tier role-based authentication.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Architecture & Features
 
-### 🏛️ 1. Departmental Showcase & Governance
-- **Interactive Landing & Experience**: High-performance Three.js interactive 3D particle background and glassmorphic UI.
-- **Academic Documents & Syllabi**: Access curriculum framework, action plans, lesson plans, lab infrastructure maps, and educator development guides.
-- **Department Activities & News**: Interactive gallery of hackathons, workshops, and student exhibitions.
+### 🏛️ 1. Department Showcase & Governance
+- **Pristine Responsive UI**: Glassmorphic slate & neon aesthetic, fluid layout, accessible navigation, and micro-animations.
+- **Academic Documents Archive**: Access all 11 official GVEI departmental PDFs (Curriculum, C.R.E.A.T.E. framework, Lesson Plans, Lab Infrastructure, Mentorship protocols) with download counters and quick previews.
+- **Milestones & Achievements**: NIT AI Hackathon Trophy, IEEE Best Paper Awards, $50,000 AgroTech Innovation Grants.
+- **Faculty Message Corner**: Real-time advisories, research announcements, and deadline alerts.
 
 ### 🤖 2. Generative AI Academic Tools
-- **AI Capstone Proposal Reviewer**: Automated AI evaluation analyzing novelty, technical feasibility, methodology rigor, and dataset alignment.
-- **AI Project Idea Generator**: Generates custom capstone and research ideas based on domain, target complexity, and preferred tech stack.
-- **Multi-Provider AI Fallback**: Integrates with Groq, OpenAI, or local heuristic fallback models.
+- **AI Capstone Proposal Evaluator**: Automated proposal audit evaluating novelty, technical feasibility, and methodology rigor with composite scoring out of 100 and rubric feedback.
+- **AI Project Idea Generator**: Parameterized synthesizer creating customized capstone abstracts, benchmark dataset links, and novelty angles across 5 research domains.
 
-### 👥 3. Multi-Tier Role-Based Authentication & Dashboards
-- **Student Portal**:
-  - Profile management, capstone proposal submission, progress tracking, and mentorship messaging.
-  - One-click registration for the **AI & Innovation Club**.
-- **Faculty Portal**:
-  - Review student capstone submissions, provide feedback, score proposals, and communicate directly with mentees.
-- **Admin Portal**:
-  - System-wide audit logs, user management, and club registration approvals.
+### 💻 3. Virtual Code Laboratory
+- **In-Browser Python & Edge AI Simulator**: Interactive code workspace with live terminal execution.
+- **Pre-loaded Templates**: YOLOv8 Edge Vision Simulation, Transformer Self-Attention Tensor Mathematics, and eBPF Kernel Threat Telemetry.
 
-### ☁️ 4. Hybrid Database Architecture
-- **Dual Sync**: Operates seamlessly on local SQLite for offline/development environments and syncs directly with **Supabase PostgreSQL** in production.
-- Full schema and migration scripts provided in [`supabase_schema.sql`](supabase_schema.sql).
+### 👥 4. Multi-Tier Role-Based Dashboards
+- **Student Dashboard**: Submit capstone abstracts, track supervisor review statuses, view scores and grades, check Innovation Club enrollment.
+- **Faculty Dashboard**: Supervised proposal evaluation, rubric scoring (0–100), letter grading, written supervisor feedback, and notice publication.
+- **Admin / HOD Dashboard**: System-wide telemetry (Total Projects, Students, Faculty, Club Members), feature/unfeature projects, user directory, club applications approval, and demo reset.
+- **Quick Demo Sign-In**: 1-click preset logins for Student, Faculty, and Admin testing.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Python 3.10+, Flask, Jinja2
-- **Frontend**: HTML5, Modern CSS (Glassmorphism, CSS Custom Properties), Vanilla JavaScript, Three.js
-- **Database**: SQLite (Local Dev) & Supabase PostgreSQL (Cloud Production)
-- **AI APIs**: Groq Cloud API, OpenAI API
-- **Testing**: Python `unittest` suite covering all routes, authentication, and AI endpoints
+- **Framework**: React 18.3+ (Vite 6)
+- **Styling**: Tailwind CSS + Custom Department Design System
+- **Routing**: React Router v6
+- **Icons**: Lucide React
+- **Data Layer**: Reactive React Context with LocalStorage persistence and initial seed state
 
 ---
 
 ## 🚀 Quick Start Guide
 
-### 1. Clone the Repository
+### 1. Install Dependencies
 ```bash
-git clone https://github.com/Mehraj-U-Din-Mir/ai-ict-department-portal.git
-cd ai-ict-department-portal
+npm install
 ```
 
-### 2. Create and Activate a Virtual Environment
+### 2. Run the Development Server
 ```bash
-# Windows
-python -m venv venv
-.\venv\Scripts\activate
-
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
+npm run dev
 ```
+Open your browser and navigate to `http://localhost:3000`.
 
-### 3. Install Dependencies
+### 3. Build for Production
 ```bash
-pip install -r requirements.txt
+npm run build
 ```
-
-### 4. Configure Environment Variables
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-Update `.env` with your preferred credentials:
-```env
-FLASK_APP=app.py
-FLASK_ENV=development
-SECRET_KEY=your-secret-key-here
-
-# Optional: Supabase credentials
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-key
-
-# Optional: AI Provider keys
-GROQ_API_KEY=your-groq-api-key
-OPENAI_API_KEY=your-openai-api-key
-```
-
-### 5. Run the Application
-```bash
-python app.py
-```
-Open your browser and navigate to `http://127.0.0.1:5000`.
-
----
-
-## 🧪 Running Automated Tests
-
-Run the full end-to-end test suite:
-```bash
-python -m unittest test_features.py -v
-```
+Creates an optimized, zero-error production bundle in `dist/`.
 
 ---
 
@@ -106,27 +65,48 @@ python -m unittest test_features.py -v
 
 ```text
 ai_ict_flask_site/
-├── app.py                   # Main Flask application & API routes
-├── requirements.txt         # Python package dependencies
-├── supabase_schema.sql      # Supabase/PostgreSQL database schema
-├── test_features.py         # Unit & integration tests
-├── .env.example             # Template environment variables
-├── .gitignore               # Ignored files (secrets, databases, bytecode)
-├── static/
-│   ├── css/custom.css       # Core styling & glassmorphic themes
-│   ├── js/                  # Interactive scripts & 3D canvas engine
-│   ├── img/                 # Department logos, faculty, and gallery media
-│   └── docs/                # Curriculum PDFs and action frameworks
-└── templates/               # Jinja2 template views
-    ├── base.html            # Base navigation & footer layout
-    ├── index.html           # Portal homepage
-    ├── ai_tools.html        # AI idea generator & proposal evaluator
-    ├── student_dashboard.html
-    ├── faculty_dashboard.html
-    └── admin_dashboard.html
+├── index.html                   # HTML entry point with font preloads
+├── package.json                 # Node dependencies and build scripts
+├── vite.config.js               # Vite + Tailwind configuration
+├── tailwind.config.js           # Theme extensions and typography
+├── public/                      # Static assets (images, logos, official PDFs)
+│   ├── img/                     # Faculty, logos, gallery images
+│   └── docs/                    # Official 2026-2027 departmental PDFs
+└── src/
+    ├── main.jsx                 # React root mount
+    ├── App.jsx                  # Main application & routing table
+    ├── index.css                # Tailwind directives & design system
+    ├── data/
+    │   └── initialData.js       # Master seed data (faithful replica from Flask)
+    ├── context/
+    │   ├── AuthContext.jsx      # Authentication & role management
+    │   └── DataContext.jsx      # Reactive data store with CRUD & persistence
+    ├── components/
+    │   └── common/
+    │       ├── Navbar.jsx       # Responsive header with role pill
+    │       └── Footer.jsx       # Institutional footer & accreditation
+    └── pages/
+        ├── Home.jsx             # Department landing page
+        ├── Projects.jsx         # Capstone project directory
+        ├── ProjectDetail.jsx    # Individual project view
+        ├── InnovationClub.jsx   # AI & Innovation Club showcases
+        ├── ClubRegister.jsx     # Club registration form
+        ├── Messages.jsx         # Faculty message corner
+        ├── Activities.jsx       # Events, workshops & hackathons
+        ├── Documents.jsx        # Protected official PDF archive
+        ├── AiTools.jsx          # AI Evaluator & Idea Generator
+        ├── VirtualLab.jsx       # Interactive Python code runtime
+        ├── Search.jsx           # Unified global search index
+        ├── auth/
+        │   ├── Login.jsx        # Multi-role authentication & quick demo fill
+        │   └── Register.jsx     # Student onboarding form
+        └── dashboards/
+            ├── StudentDashboard.jsx
+            ├── FacultyDashboard.jsx
+            └── AdminDashboard.jsx
 ```
 
 ---
 
 ## 📄 License
-This project is developed for educational and departmental administration purposes.
+Department of AI & ICT, Green Valley Educational Institute (GVEI).

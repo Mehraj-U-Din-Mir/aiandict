@@ -34,3 +34,9 @@ Thumbs.db
 # Logs
 *.log
 
+
+# Node & Vite build outputs
+node_modules/
+dist/
+dist-ssr/
+*.local
